@@ -1,7 +1,7 @@
 {
   "name": "backend",
   "version": "1.0.0",
-  "description": "REST API for Finora personal finance dashboard",
+  "description": "REST API for Noniq personal finance dashboard",
   "main": "dist/server.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",

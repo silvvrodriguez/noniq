@@ -10,7 +10,7 @@ app.use(express.json());
 
 app.get("/", (_req, res) => {
   res.json({
-    message: "Finora API is running",
+    message: "Noniq API is running",
   });
 });
 
@@ -27,5 +27,5 @@ app.get("/health", async (_req, res) => {
 app.use("/auth", authRouter);
 
 app.listen(PORT, () => {
-  console.log(`Finora API running on http://localhost:${PORT}`);
+  console.log(`Noniq API running on http://localhost:${PORT}`);
 });
