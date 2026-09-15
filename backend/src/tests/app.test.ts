@@ -2090,4 +2090,376 @@ describe("Noniq API", () => {
       message: "Invalid or expired token",
     });
   });
+
+    // ─────────────────────────────────────────────
+  // SAVINGS GOALS
+  // ─────────────────────────────────────────────
+
+  it("POST /savings-goals creates a savings goal for the authenticated user", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Savings User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const response = await request(app)
+      .post("/savings-goals")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Notebook nueva",
+        targetAmount: 8000000,
+        currentAmount: 3000000,
+        targetDate: "2027-03-31",
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.savingsGoal).toMatchObject({
+      name: "Notebook nueva",
+      targetAmount: "8000000",
+      currentAmount: "3000000",
+      targetDate: "2027-03-31T00:00:00.000Z",
+    });
+
+    expect(response.body.savingsGoal.id).toBeDefined();
+  });
+
+  it("POST /savings-goals uses zero as the default current amount", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Savings User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const response = await request(app)
+      .post("/savings-goals")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Viaje",
+        targetAmount: 5000000,
+      });
+
+    expect(response.status).toBe(201);
+    expect(response.body.savingsGoal.name).toBe("Viaje");
+    expect(response.body.savingsGoal.targetAmount).toBe("5000000");
+    expect(response.body.savingsGoal.currentAmount).toBe("0");
+    expect(response.body.savingsGoal.targetDate).toBeNull();
+  });
+
+  it("POST /savings-goals rejects invalid savings goal data", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Savings User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const response = await request(app)
+      .post("/savings-goals")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "",
+        targetAmount: -1000,
+        currentAmount: -500,
+        targetDate: "31-03-2027",
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Invalid savings goal data");
+  });
+
+  it("GET /savings-goals calculates remaining and percentage", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Savings User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    await request(app)
+      .post("/savings-goals")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Notebook nueva",
+        targetAmount: 8000000,
+        currentAmount: 3000000,
+        targetDate: "2027-03-31",
+      });
+
+    const response = await request(app)
+      .get("/savings-goals")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.savingsGoals).toHaveLength(1);
+
+    expect(response.body.savingsGoals[0]).toMatchObject({
+      name: "Notebook nueva",
+      targetAmount: 8000000,
+      currentAmount: 3000000,
+      remaining: 5000000,
+      percentage: 38,
+      targetDate: "2027-03-31T00:00:00.000Z",
+    });
+  });
+
+  it("PATCH /savings-goals/:id updates a savings goal owned by the authenticated user", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Savings User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const createResponse = await request(app)
+      .post("/savings-goals")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Notebook",
+        targetAmount: 8000000,
+        currentAmount: 1000000,
+        targetDate: "2027-03-31",
+      });
+
+    const goalId = createResponse.body.savingsGoal.id;
+
+    const response = await request(app)
+      .patch(`/savings-goals/${goalId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Notebook nueva",
+        targetAmount: 9000000,
+        currentAmount: 3000000,
+        targetDate: "2027-05-31",
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.savingsGoal).toMatchObject({
+      id: goalId,
+      name: "Notebook nueva",
+      targetAmount: "9000000",
+      currentAmount: "3000000",
+      targetDate: "2027-05-31T00:00:00.000Z",
+    });
+  });
+
+  it("PATCH /savings-goals/:id rejects a savings goal owned by another user", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "First User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const firstLogin = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const firstToken = firstLogin.body.token;
+
+    const createResponse = await request(app)
+      .post("/savings-goals")
+      .set("Authorization", `Bearer ${firstToken}`)
+      .send({
+        name: "Private Goal",
+        targetAmount: 5000000,
+      });
+
+    const goalId = createResponse.body.savingsGoal.id;
+
+    const secondEmail = `second-${Date.now()}@example.com`;
+
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Second User",
+        email: secondEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const secondLogin = await request(app)
+      .post("/auth/login")
+      .send({
+        email: secondEmail,
+        password: "password123",
+      });
+
+    const secondToken = secondLogin.body.token;
+
+    const response = await request(app)
+      .patch(`/savings-goals/${goalId}`)
+      .set("Authorization", `Bearer ${secondToken}`)
+      .send({
+        name: "Changed Goal",
+      });
+
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBe("Savings goal not found");
+  });
+
+  it("DELETE /savings-goals/:id deletes a savings goal owned by the authenticated user", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Savings User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const createResponse = await request(app)
+      .post("/savings-goals")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Emergency Fund",
+        targetAmount: 10000000,
+      });
+
+    const goalId = createResponse.body.savingsGoal.id;
+
+    const deleteResponse = await request(app)
+      .delete(`/savings-goals/${goalId}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(deleteResponse.status).toBe(200);
+    expect(deleteResponse.body.message).toBe(
+      "Savings goal deleted successfully"
+    );
+
+    const listResponse = await request(app)
+      .get("/savings-goals")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(listResponse.status).toBe(200);
+    expect(listResponse.body.savingsGoals).toHaveLength(0);
+  });
+
+  it("DELETE /savings-goals/:id rejects a savings goal owned by another user", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "First User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const firstLogin = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const firstToken = firstLogin.body.token;
+
+    const createResponse = await request(app)
+      .post("/savings-goals")
+      .set("Authorization", `Bearer ${firstToken}`)
+      .send({
+        name: "Private Goal",
+        targetAmount: 5000000,
+      });
+
+    const goalId = createResponse.body.savingsGoal.id;
+
+    const secondEmail = `second-${Date.now()}@example.com`;
+
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Second User",
+        email: secondEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const secondLogin = await request(app)
+      .post("/auth/login")
+      .send({
+        email: secondEmail,
+        password: "password123",
+      });
+
+    const secondToken = secondLogin.body.token;
+
+    const response = await request(app)
+      .delete(`/savings-goals/${goalId}`)
+      .set("Authorization", `Bearer ${secondToken}`);
+
+    expect(response.status).toBe(404);
+    expect(response.body.message).toBe("Savings goal not found");
+  });
+  
 });
