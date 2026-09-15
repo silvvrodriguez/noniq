@@ -25,20 +25,23 @@ model User {
   currency     String        @default("PYG")
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
+
   categories   Category[]
   transactions Transaction[]
+  budgets      Budget[]
 }
 
 model Category {
-  id           String        @id @default(uuid())
-  name         String
-  type         CategoryType
-  createdAt    DateTime      @default(now())
+  id        String       @id @default(uuid())
+  name      String
+  type      CategoryType
+  createdAt DateTime     @default(now())
 
-  userId       String
-  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   transactions Transaction[]
+  budgets      Budget[]
 }
 
 model Transaction {
@@ -50,9 +53,25 @@ model Transaction {
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
 
-  userId      String
-  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  categoryId  String
-  category    Category        @relation(fields: [categoryId], references: [id])
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+}
+
+model Budget {
+  id        String   @id @default(uuid())
+  amount    Decimal  @db.Decimal(18, 2)
+  month     DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  categoryId String
+  category   Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([userId, categoryId, month])
 }
