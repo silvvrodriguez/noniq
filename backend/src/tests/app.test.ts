@@ -78,6 +78,104 @@ describe("Noniq API", () => {
     });
   });
 
+  it("POST /auth/login authenticates a registered user", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Vitest User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const response = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.message).toBe("Login successful");
+
+    expect(response.body.token).toBeDefined();
+    expect(typeof response.body.token).toBe("string");
+
+    expect(response.body.user).toMatchObject({
+      name: "Vitest User",
+      email: testEmail,
+      currency: "PYG",
+    });
+
+    expect(response.body.user.id).toBeDefined();
+    expect(response.body.user.password).toBeUndefined();
+  });
+
+  it("POST /auth/login rejects an incorrect password", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Vitest User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const response = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "wrongpassword",
+      });
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({
+      message: "Invalid email or password",
+    });
+
+    expect(response.body.token).toBeUndefined();
+  });
+
+  it("GET /auth/me returns the authenticated user", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Vitest User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    expect(loginResponse.status).toBe(200);
+
+    const token = loginResponse.body.token;
+
+    expect(token).toBeDefined();
+
+    const response = await request(app)
+      .get("/auth/me")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+
+    expect(response.body.user).toMatchObject({
+      name: "Vitest User",
+      email: testEmail,
+      currency: "PYG",
+    });
+
+    expect(response.body.user.id).toBeDefined();
+    expect(response.body.user.createdAt).toBeDefined();
+    expect(response.body.user.password).toBeUndefined();
+  });
+
   it("GET /categories rejects requests without authentication", async () => {
     const response = await request(app).get("/categories");
 
