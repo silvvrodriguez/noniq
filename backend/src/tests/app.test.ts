@@ -854,6 +854,16 @@ describe("Noniq API", () => {
       message: "Invalid transaction type",
     });
 
+    const invalidCategoryResponse = await request(app)
+  .get("/transactions")
+  .query({ categoryId: "not-a-valid-uuid" })
+  .set("Authorization", `Bearer ${token}`);
+
+  expect(invalidCategoryResponse.status).toBe(400);
+  expect(invalidCategoryResponse.body).toEqual({
+  message: "Invalid category ID",
+  });
+
     const invalidFromResponse = await request(app)
       .get("/transactions")
       .query({ from: "15-09-2026" })

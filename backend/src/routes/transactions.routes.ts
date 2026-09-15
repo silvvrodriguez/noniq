@@ -115,7 +115,10 @@ router.get(
 
     if (
       categoryId !== undefined &&
-      typeof categoryId !== "string"
+      (
+        typeof categoryId !== "string" ||
+        !z.uuid().safeParse(categoryId).success
+      )
     ) {
       return res.status(400).json({
         message: "Invalid category ID",
