@@ -7,12 +7,28 @@ datasource db {
   provider = "postgresql"
 }
 
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
 model User {
-  id        String   @id @default(uuid())
+  id         String     @id @default(uuid())
+  name       String
+  email      String     @unique
+  password   String
+  currency   String     @default("PYG")
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  categories Category[]
+}
+
+model Category {
+  id        String       @id @default(uuid())
   name      String
-  email     String   @unique
-  password  String
-  currency  String   @default("PYG")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  type      CategoryType
+  createdAt DateTime     @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
