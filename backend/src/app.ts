@@ -1,6 +1,8 @@
 import express from "express";
 
 import { prisma } from "./lib/prisma.js";
+import { errorHandler } from "./middleware/error.middleware.js";
+
 import authRouter from "./routes/auth.routes.js";
 import categoriesRouter from "./routes/categories.routes.js";
 import transactionsRouter from "./routes/transactions.routes.js";
@@ -36,5 +38,8 @@ app.use("/dashboard", dashboardRouter);
 app.use("/budgets", budgetRouter);
 app.use("/savings-goals", savingsGoalRouter);
 app.use("/export", exportRouter);
+
+// Global error handler — must be registered after all routes.
+app.use(errorHandler);
 
 export default app;
