@@ -7,6 +7,7 @@ import transactionsRouter from "./routes/transactions.routes.js";
 import dashboardRouter from "./routes/dashboard.routes.js";
 import budgetRouter from "./routes/budget.routes.js";
 import savingsGoalRouter from "./routes/savings-goal.routes.js";
+import exportRouter from "./routes/export.routes.js";
 
 const app = express();
 const PORT = 4000;
@@ -35,6 +36,7 @@ app.use("/transactions", transactionsRouter);
 app.use("/dashboard", dashboardRouter);
 app.use("/budgets", budgetRouter);
 app.use("/savings-goals", savingsGoalRouter);
+app.use("/export", exportRouter);
 
 app.listen(PORT, () => {
   console.log(`Noniq API running on http://localhost:${PORT}`);
