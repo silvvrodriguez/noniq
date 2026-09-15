@@ -31,92 +31,72 @@ const updateSavingsGoalSchema = z
       data.targetDate !== undefined,
     {
       message: "At least one field is required",
-    }
+    },
   );
 
-router.post(
-  "/",
-  authenticateToken,
-  async (req: AuthenticatedRequest, res) => {
-    const parsed = createSavingsGoalSchema.safeParse(req.body);
+router.post("/", authenticateToken, async (req: AuthenticatedRequest, res) => {
+  const parsed = createSavingsGoalSchema.safeParse(req.body);
 
-    if (!parsed.success) {
-      return res.status(400).json({
-        message: "Invalid savings goal data",
-        errors: parsed.error.flatten(),
-      });
-    }
+  if (!parsed.success) {
+    return res.status(400).json({
+      message: "Invalid savings goal data",
+      errors: parsed.error.flatten(),
+    });
+  }
 
-    const {
+  const { name, targetAmount, currentAmount = 0, targetDate } = parsed.data;
+
+  const savingsGoal = await prisma.savingsGoal.create({
+    data: {
       name,
       targetAmount,
-      currentAmount = 0,
-      targetDate,
-    } = parsed.data;
+      currentAmount,
+      targetDate: targetDate ? new Date(`${targetDate}T00:00:00.000Z`) : null,
+      userId: req.userId!,
+    },
+  });
 
-    const savingsGoal = await prisma.savingsGoal.create({
-      data: {
-        name,
-        targetAmount,
-        currentAmount,
-        targetDate: targetDate
-          ? new Date(`${targetDate}T00:00:00.000Z`)
-          : null,
-        userId: req.userId!,
-      },
-    });
+  return res.status(201).json({
+    savingsGoal,
+  });
+});
 
-    return res.status(201).json({
-      savingsGoal,
-    });
-  }
-);
+router.get("/", authenticateToken, async (req: AuthenticatedRequest, res) => {
+  const savingsGoals = await prisma.savingsGoal.findMany({
+    where: {
+      userId: req.userId!,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
 
-router.get(
-  "/",
-  authenticateToken,
-  async (req: AuthenticatedRequest, res) => {
-    const savingsGoals = await prisma.savingsGoal.findMany({
-      where: {
-        userId: req.userId!,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+  const result = savingsGoals.map((goal) => {
+    const targetAmount = Number(goal.targetAmount);
+    const currentAmount = Number(goal.currentAmount);
 
-    const result = savingsGoals.map((goal) => {
-      const targetAmount = Number(goal.targetAmount);
-      const currentAmount = Number(goal.currentAmount);
+    const remaining = Math.max(targetAmount - currentAmount, 0);
 
-      const remaining = Math.max(
-        targetAmount - currentAmount,
-        0
-      );
+    const percentage =
+      targetAmount > 0 ? Math.round((currentAmount / targetAmount) * 100) : 0;
 
-      const percentage =
-        targetAmount > 0
-          ? Math.round((currentAmount / targetAmount) * 100)
-          : 0;
+    return {
+      id: goal.id,
+      name: goal.name,
+      targetAmount,
+      currentAmount,
+      remaining,
+      percentage,
+      targetDate: goal.targetDate,
+      createdAt: goal.createdAt,
+      updatedAt: goal.updatedAt,
+    };
+  });
 
-      return {
-        id: goal.id,
-        name: goal.name,
-        targetAmount,
-        currentAmount,
-        remaining,
-        percentage,
-        targetDate: goal.targetDate,
-        createdAt: goal.createdAt,
-        updatedAt: goal.updatedAt,
-      };
-    });
-
-    return res.status(200).json({
-      savingsGoals: result,
-    });
-  }
-);
+  return res.status(200).json({
+    savingsGoals: result,
+  });
+});
 
 router.patch(
   "/:id",
@@ -152,12 +132,7 @@ router.patch(
       });
     }
 
-    const {
-      name,
-      targetAmount,
-      currentAmount,
-      targetDate,
-    } = parsed.data;
+    const { name, targetAmount, currentAmount, targetDate } = parsed.data;
 
     const updatedSavingsGoal = await prisma.savingsGoal.update({
       where: {
@@ -185,7 +160,7 @@ router.patch(
     return res.status(200).json({
       savingsGoal: updatedSavingsGoal,
     });
-  }
+  },
 );
 
 router.delete(
@@ -222,7 +197,7 @@ router.delete(
     return res.status(200).json({
       message: "Savings goal deleted successfully",
     });
-  }
+  },
 );
 
 export default router;

@@ -42,11 +42,11 @@ router.get(
     const now = new Date();
 
     const startOfMonth = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1),
     );
 
     const startOfNextMonth = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1)
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
     );
 
     const monthlyIncomeResult = await prisma.transaction.aggregate({
@@ -77,13 +77,9 @@ router.get(
       },
     });
 
-    const monthlyIncome = Number(
-      monthlyIncomeResult._sum.amount ?? 0
-    );
+    const monthlyIncome = Number(monthlyIncomeResult._sum.amount ?? 0);
 
-    const monthlyExpenses = Number(
-      monthlyExpensesResult._sum.amount ?? 0
-    );
+    const monthlyExpenses = Number(monthlyExpensesResult._sum.amount ?? 0);
 
     const recentTransactions = await prisma.transaction.findMany({
       where: {
@@ -108,7 +104,7 @@ router.get(
       monthlyExpenses,
       recentTransactions,
     });
-  }
+  },
 );
 
 router.get(
@@ -137,9 +133,7 @@ router.get(
     }
 
     const fromDate =
-      typeof from === "string"
-        ? new Date(`${from}T00:00:00.000Z`)
-        : undefined;
+      typeof from === "string" ? new Date(`${from}T00:00:00.000Z`) : undefined;
 
     let toDate: Date | undefined;
 
@@ -169,9 +163,7 @@ router.get(
       },
     });
 
-    const categoryIds = expensesByCategory.map(
-      (item) => item.categoryId
-    );
+    const categoryIds = expensesByCategory.map((item) => item.categoryId);
 
     const categories = await prisma.category.findMany({
       where: {
@@ -185,7 +177,7 @@ router.get(
     const result = expensesByCategory
       .map((item) => {
         const category = categories.find(
-          (category) => category.id === item.categoryId
+          (category) => category.id === item.categoryId,
         );
 
         return {
@@ -199,7 +191,7 @@ router.get(
     return res.status(200).json({
       categories: result,
     });
-  }
+  },
 );
 
 export default router;

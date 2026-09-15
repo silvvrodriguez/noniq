@@ -2570,12 +2570,11 @@ describe("Noniq API", () => {
   });
 
   it("returns JSON 404 for an unknown API route", async () => {
-  const response = await request(app).get("/this-route-does-not-exist");
+    const response = await request(app).get("/this-route-does-not-exist");
 
-  expect(response.status).toBe(404);
-  expect(response.body).toEqual({
-    message: "Route not found",
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
+      message: "Route not found",
+    });
   });
-  });
-
 });

@@ -39,13 +39,7 @@ router.get(
       },
     });
 
-    const header = [
-      "date",
-      "type",
-      "category",
-      "description",
-      "amount",
-    ];
+    const header = ["date", "type", "category", "description", "amount"];
 
     const rows = transactions.map((transaction) => [
       transaction.date.toISOString(),
@@ -57,23 +51,18 @@ router.get(
 
     const csv = [
       header.map(escapeCsvValue).join(","),
-      ...rows.map((row) =>
-        row.map(escapeCsvValue).join(",")
-      ),
+      ...rows.map((row) => row.map(escapeCsvValue).join(",")),
     ].join("\r\n");
 
-    res.setHeader(
-      "Content-Type",
-      "text/csv; charset=utf-8"
-    );
+    res.setHeader("Content-Type", "text/csv; charset=utf-8");
 
     res.setHeader(
       "Content-Disposition",
-      'attachment; filename="noniq-transactions.csv"'
+      'attachment; filename="noniq-transactions.csv"',
     );
 
     return res.status(200).send(csv);
-  }
+  },
 );
 
 export default router;

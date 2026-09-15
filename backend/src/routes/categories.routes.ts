@@ -24,54 +24,46 @@ const updateCategorySchema = z
     message: "At least one field is required",
   });
 
-router.post(
-  "/",
-  authenticateToken,
-  async (req: AuthenticatedRequest, res) => {
-    const result = createCategorySchema.safeParse(req.body);
+router.post("/", authenticateToken, async (req: AuthenticatedRequest, res) => {
+  const result = createCategorySchema.safeParse(req.body);
 
-    if (!result.success) {
-      return res.status(400).json({
-        message: "Invalid category data",
-        errors: result.error.flatten(),
-      });
-    }
-
-    const { name, type } = result.data;
-
-    const category = await prisma.category.create({
-      data: {
-        name,
-        type,
-        userId: req.userId!,
-      },
-    });
-
-    return res.status(201).json({
-      message: "Category created successfully",
-      category,
+  if (!result.success) {
+    return res.status(400).json({
+      message: "Invalid category data",
+      errors: result.error.flatten(),
     });
   }
-);
 
-router.get(
-  "/",
-  authenticateToken,
-  async (req: AuthenticatedRequest, res) => {
-    const categories = await prisma.category.findMany({
-      where: {
-        userId: req.userId!,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+  const { name, type } = result.data;
 
-    return res.status(200).json({
-      categories,
-    });
-  }
-);
+  const category = await prisma.category.create({
+    data: {
+      name,
+      type,
+      userId: req.userId!,
+    },
+  });
+
+  return res.status(201).json({
+    message: "Category created successfully",
+    category,
+  });
+});
+
+router.get("/", authenticateToken, async (req: AuthenticatedRequest, res) => {
+  const categories = await prisma.category.findMany({
+    where: {
+      userId: req.userId!,
+    },
+    orderBy: {
+      createdAt: "desc",
+    },
+  });
+
+  return res.status(200).json({
+    categories,
+  });
+});
 
 router.patch(
   "/:id",
@@ -118,7 +110,7 @@ router.patch(
       message: "Category updated successfully",
       category: updatedCategory,
     });
-  }
+  },
 );
 
 router.delete(
@@ -169,7 +161,7 @@ router.delete(
     return res.status(200).json({
       message: "Category deleted successfully",
     });
-  }
+  },
 );
 
 export default router;

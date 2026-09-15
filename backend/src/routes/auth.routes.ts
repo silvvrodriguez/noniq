@@ -95,10 +95,7 @@ router.post("/login", async (req, res) => {
     });
   }
 
-  const passwordMatches = await bcrypt.compare(
-    password,
-    user.password
-  );
+  const passwordMatches = await bcrypt.compare(password, user.password);
 
   if (!passwordMatches) {
     return res.status(401).json({
@@ -113,7 +110,7 @@ router.post("/login", async (req, res) => {
     env.JWT_SECRET,
     {
       expiresIn: "1h",
-    }
+    },
   );
 
   return res.status(200).json({
@@ -128,33 +125,29 @@ router.post("/login", async (req, res) => {
   });
 });
 
-router.get(
-  "/me",
-  authenticateToken,
-  async (req: AuthenticatedRequest, res) => {
-    const user = await prisma.user.findUnique({
-      where: {
-        id: req.userId,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        currency: true,
-        createdAt: true,
-      },
-    });
+router.get("/me", authenticateToken, async (req: AuthenticatedRequest, res) => {
+  const user = await prisma.user.findUnique({
+    where: {
+      id: req.userId,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      currency: true,
+      createdAt: true,
+    },
+  });
 
-    if (!user) {
-      return res.status(404).json({
-        message: "User not found",
-      });
-    }
-
-    return res.status(200).json({
-      user,
+  if (!user) {
+    return res.status(404).json({
+      message: "User not found",
     });
   }
-);
+
+  return res.status(200).json({
+    user,
+  });
+});
 
 export default router;

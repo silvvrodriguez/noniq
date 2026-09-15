@@ -8,7 +8,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "vitest run --mode test",
-    "test:watch": "vitest --mode test"
+    "test:watch": "vitest --mode test",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\""
   },
   "keywords": [],
   "author": "",

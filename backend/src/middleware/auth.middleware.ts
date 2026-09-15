@@ -10,7 +10,7 @@ export interface AuthenticatedRequest extends Request {
 export function authenticateToken(
   req: AuthenticatedRequest,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) {
   const authorization = req.headers.authorization;
 
@@ -25,10 +25,7 @@ export function authenticateToken(
   try {
     const payload = jwt.verify(token, env.JWT_SECRET);
 
-    if (
-      typeof payload === "string" ||
-      typeof payload.userId !== "string"
-    ) {
+    if (typeof payload === "string" || typeof payload.userId !== "string") {
       return res.status(401).json({
         message: "Invalid token",
       });

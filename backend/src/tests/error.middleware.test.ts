@@ -29,9 +29,7 @@ describe("Error middleware", () => {
       message: "Internal server error",
     });
 
-    expect(response.text).not.toContain(
-      "Sensitive internal error"
-    );
+    expect(response.text).not.toContain("Sensitive internal error");
 
     expect(consoleErrorSpy).toHaveBeenCalledOnce();
   });
