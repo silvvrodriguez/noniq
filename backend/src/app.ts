@@ -1,6 +1,7 @@
 import express from "express";
 
 import { prisma } from "./lib/prisma.js";
+
 import { errorHandler } from "./middleware/error.middleware.js";
 
 import authRouter from "./routes/auth.routes.js";
@@ -39,7 +40,14 @@ app.use("/budgets", budgetRouter);
 app.use("/savings-goals", savingsGoalRouter);
 app.use("/export", exportRouter);
 
-// Global error handler — must be registered after all routes.
+// 404 handler — must be registered after all routes.
+app.use((_req, res) => {
+  return res.status(404).json({
+    message: "Route not found",
+  });
+});
+
+// Global error handler — must be registered last.
 app.use(errorHandler);
 
 export default app;

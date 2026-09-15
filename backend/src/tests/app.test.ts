@@ -2568,4 +2568,14 @@ describe("Noniq API", () => {
 
     expect(categoryStillExists).not.toBeNull();
   });
+
+  it("returns JSON 404 for an unknown API route", async () => {
+  const response = await request(app).get("/this-route-does-not-exist");
+
+  expect(response.status).toBe(404);
+  expect(response.body).toEqual({
+    message: "Route not found",
+  });
+  });
+
 });
