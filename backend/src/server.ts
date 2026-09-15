@@ -4,6 +4,7 @@ import { prisma } from "./lib/prisma.js";
 import authRouter from "./routes/auth.routes.js";
 import categoriesRouter from "./routes/categories.routes.js";
 import transactionsRouter from "./routes/transactions.routes.js";
+import dashboardRouter from "./routes/dashboard.routes.js";
 
 const app = express();
 const PORT = 4000;
@@ -29,6 +30,7 @@ app.get("/health", async (_req, res) => {
 app.use("/auth", authRouter);
 app.use("/categories", categoriesRouter);
 app.use("/transactions", transactionsRouter);
+app.use("/dashboard", dashboardRouter);
 
 app.listen(PORT, () => {
   console.log(`Noniq API running on http://localhost:${PORT}`);
