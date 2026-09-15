@@ -4,9 +4,11 @@
   "description": "REST API for Noniq personal finance dashboard",
   "main": "dist/server.js",
   "scripts": {
-    "dev": "tsx watch src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js"
+  "dev": "tsx watch src/server.ts",
+  "build": "tsc",
+  "start": "node dist/server.js",
+  "test": "vitest run",
+  "test:watch": "vitest"
   },
   "keywords": [],
   "author": "",
@@ -26,8 +28,11 @@
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.5.1",
+    "@types/supertest": "^7.2.1",
     "prisma": "^7.10.0",
+    "supertest": "^7.2.2",
     "tsx": "^4.23.13",
-    "typescript": "^7.0.2"
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1"
   }
 }
