@@ -37,6 +37,8 @@ const updateTransactionSchema = z
     }
   );
 
+const dateSchema = z.iso.date();
+
 router.post(
   "/",
   authenticateToken,
@@ -96,9 +98,75 @@ router.get(
   "/",
   authenticateToken,
   async (req: AuthenticatedRequest, res) => {
+    const type = req.query.type;
+    const categoryId = req.query.categoryId;
+    const from = req.query.from;
+    const to = req.query.to;
+
+    if (
+      type !== undefined &&
+      type !== "INCOME" &&
+      type !== "EXPENSE"
+    ) {
+      return res.status(400).json({
+        message: "Invalid transaction type",
+      });
+    }
+
+    if (
+      categoryId !== undefined &&
+      typeof categoryId !== "string"
+    ) {
+      return res.status(400).json({
+        message: "Invalid category ID",
+      });
+    }
+
+    if (
+      from !== undefined &&
+      (typeof from !== "string" || !dateSchema.safeParse(from).success)
+    ) {
+      return res.status(400).json({
+        message: "Invalid from date. Use YYYY-MM-DD",
+      });
+    }
+
+    if (
+      to !== undefined &&
+      (typeof to !== "string" || !dateSchema.safeParse(to).success)
+    ) {
+      return res.status(400).json({
+        message: "Invalid to date. Use YYYY-MM-DD",
+      });
+    }
+
+    const fromDate =
+      typeof from === "string"
+        ? new Date(`${from}T00:00:00.000Z`)
+        : undefined;
+
+    let toDate: Date | undefined;
+
+    if (typeof to === "string") {
+      toDate = new Date(`${to}T00:00:00.000Z`);
+      toDate.setUTCDate(toDate.getUTCDate() + 1);
+    }
+
+    if (fromDate && toDate && fromDate >= toDate) {
+      return res.status(400).json({
+        message: "From date must be before or equal to to date",
+      });
+    }
+
     const transactions = await prisma.transaction.findMany({
       where: {
         userId: req.userId!,
+        type,
+        categoryId,
+        date: {
+          gte: fromDate,
+          lt: toDate,
+        },
       },
       include: {
         category: true,
