@@ -16,12 +16,23 @@ const createSavingsGoalSchema = z.object({
   targetDate: z.iso.date().optional(),
 });
 
-const updateSavingsGoalSchema = z.object({
-  name: z.string().trim().min(1).max(100).optional(),
-  targetAmount: z.number().positive().optional(),
-  currentAmount: z.number().min(0).optional(),
-  targetDate: z.iso.date().nullable().optional(),
-});
+const updateSavingsGoalSchema = z
+  .object({
+    name: z.string().trim().min(1).max(100).optional(),
+    targetAmount: z.number().positive().optional(),
+    currentAmount: z.number().min(0).optional(),
+    targetDate: z.iso.date().nullable().optional(),
+  })
+  .refine(
+    (data) =>
+      data.name !== undefined ||
+      data.targetAmount !== undefined ||
+      data.currentAmount !== undefined ||
+      data.targetDate !== undefined,
+    {
+      message: "At least one field is required",
+    }
+  );
 
 router.post(
   "/",

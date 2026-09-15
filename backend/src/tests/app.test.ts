@@ -2309,6 +2309,47 @@ describe("Noniq API", () => {
     });
   });
 
+  it("PATCH /savings-goals/:id rejects an empty request body", async () => {
+  await request(app)
+    .post("/auth/register")
+    .send({
+      name: "Savings User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
+
+  const loginResponse = await request(app)
+    .post("/auth/login")
+    .send({
+      email: testEmail,
+      password: "password123",
+    });
+
+  const token = loginResponse.body.token;
+
+  const createResponse = await request(app)
+    .post("/savings-goals")
+    .set("Authorization", `Bearer ${token}`)
+    .send({
+      name: "Notebook",
+      targetAmount: 8000000,
+      currentAmount: 1000000,
+    });
+
+  const goalId = createResponse.body.savingsGoal.id;
+
+  const response = await request(app)
+    .patch(`/savings-goals/${goalId}`)
+    .set("Authorization", `Bearer ${token}`)
+    .send({});
+
+  expect(response.status).toBe(400);
+  expect(response.body.message).toBe(
+    "Invalid savings goal data"
+  );
+  });
+
   it("PATCH /savings-goals/:id rejects a savings goal owned by another user", async () => {
     await request(app)
       .post("/auth/register")
