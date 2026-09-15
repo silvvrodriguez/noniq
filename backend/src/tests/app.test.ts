@@ -2461,5 +2461,248 @@ describe("Noniq API", () => {
     expect(response.status).toBe(404);
     expect(response.body.message).toBe("Savings goal not found");
   });
+
+    // ─────────────────────────────────────────────
+  // CSV EXPORT
+  // ─────────────────────────────────────────────
+
+  it("GET /export/transactions.csv exports the authenticated user's transactions as CSV", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Export User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const categoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Food",
+        type: "EXPENSE",
+      });
+
+    const categoryId = categoryResponse.body.category.id;
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 250000,
+        description: "Weekly groceries",
+        type: "EXPENSE",
+        date: "2026-09-15T12:00:00.000Z",
+        categoryId,
+      });
+
+    const response = await request(app)
+      .get("/export/transactions.csv")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+
+    expect(response.headers["content-type"]).toContain(
+      "text/csv"
+    );
+
+    expect(response.headers["content-disposition"]).toBe(
+      'attachment; filename="noniq-transactions.csv"'
+    );
+
+    expect(response.text).toContain(
+      "date,type,category,description,amount"
+    );
+
+    expect(response.text).toContain(
+      "2026-09-15T12:00:00.000Z,EXPENSE,Food,Weekly groceries,250000"
+    );
+  });
+
+  it("GET /export/transactions.csv exports only the authenticated user's transactions", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "First User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const firstLogin = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const firstToken = firstLogin.body.token;
+
+    const firstCategoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${firstToken}`)
+      .send({
+        name: "Food",
+        type: "EXPENSE",
+      });
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${firstToken}`)
+      .send({
+        amount: 100000,
+        description: "First user transaction",
+        type: "EXPENSE",
+        date: "2026-09-15T12:00:00.000Z",
+        categoryId: firstCategoryResponse.body.category.id,
+      });
+
+    const secondEmail = `second-${Date.now()}@example.com`;
+
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Second User",
+        email: secondEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const secondLogin = await request(app)
+      .post("/auth/login")
+      .send({
+        email: secondEmail,
+        password: "password123",
+      });
+
+    const secondToken = secondLogin.body.token;
+
+    const secondCategoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${secondToken}`)
+      .send({
+        name: "Transport",
+        type: "EXPENSE",
+      });
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${secondToken}`)
+      .send({
+        amount: 50000,
+        description: "Second user private transaction",
+        type: "EXPENSE",
+        date: "2026-09-15T13:00:00.000Z",
+        categoryId: secondCategoryResponse.body.category.id,
+      });
+
+    const response = await request(app)
+      .get("/export/transactions.csv")
+      .set("Authorization", `Bearer ${firstToken}`);
+
+    expect(response.status).toBe(200);
+
+    expect(response.text).toContain(
+      "First user transaction"
+    );
+
+    expect(response.text).not.toContain(
+      "Second user private transaction"
+    );
+  });
+
+  it("GET /export/transactions.csv escapes commas and quotes correctly", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Export User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const categoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Food, Drinks",
+        type: "EXPENSE",
+      });
+
+    const categoryId = categoryResponse.body.category.id;
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 125000,
+        description: 'Lunch, "special"',
+        type: "EXPENSE",
+        date: "2026-09-15T14:00:00.000Z",
+        categoryId,
+      });
+
+    const response = await request(app)
+      .get("/export/transactions.csv")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+
+    expect(response.text).toContain(
+      '"Food, Drinks"'
+    );
+
+    expect(response.text).toContain(
+      '"Lunch, ""special"""'
+    );
+  });
+
+  it("GET /export/transactions.csv returns only the header when the user has no transactions", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Export User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const response = await request(app)
+      .get("/export/transactions.csv")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.text).toBe(
+      "date,type,category,description,amount"
+    );
+  });
   
 });
