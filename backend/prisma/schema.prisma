@@ -18,17 +18,18 @@ enum TransactionType {
 }
 
 model User {
-  id           String        @id @default(uuid())
+  id           String   @id @default(uuid())
   name         String
-  email        String        @unique
+  email        String   @unique
   password     String
-  currency     String        @default("PYG")
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  currency     String   @default("PYG")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   categories   Category[]
   transactions Transaction[]
   budgets      Budget[]
+  savingsGoals SavingsGoal[]
 }
 
 model Category {
@@ -74,4 +75,17 @@ model Budget {
   category   Category @relation(fields: [categoryId], references: [id])
 
   @@unique([userId, categoryId, month])
+}
+
+model SavingsGoal {
+  id            String   @id @default(uuid())
+  name          String
+  targetAmount  Decimal  @db.Decimal(18, 2)
+  currentAmount Decimal  @default(0) @db.Decimal(18, 2)
+  targetDate    DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  userId String
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
