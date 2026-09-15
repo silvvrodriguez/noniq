@@ -32,19 +32,15 @@ describe("Noniq API", () => {
   });
 
   it("POST /auth/register creates a new user", async () => {
-    const response = await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    const response = await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
     expect(response.status).toBe(201);
-    expect(response.body.message).toBe(
-      "User registered successfully"
-    );
+    expect(response.body.message).toBe("User registered successfully");
 
     expect(response.body.user).toMatchObject({
       name: "Vitest User",
@@ -82,21 +78,17 @@ describe("Noniq API", () => {
   });
 
   it("POST /auth/login authenticates a registered user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const response = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const response = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     expect(response.status).toBe(200);
     expect(response.body.message).toBe("Login successful");
@@ -115,21 +107,17 @@ describe("Noniq API", () => {
   });
 
   it("POST /auth/login rejects an incorrect password", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const response = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "wrongpassword",
-      });
+    const response = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "wrongpassword",
+    });
 
     expect(response.status).toBe(401);
     expect(response.body).toEqual({
@@ -140,21 +128,17 @@ describe("Noniq API", () => {
   });
 
   it("GET /auth/me returns the authenticated user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -176,21 +160,17 @@ describe("Noniq API", () => {
   });
 
   it("POST /categories creates a category for the authenticated user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -213,21 +193,17 @@ describe("Noniq API", () => {
   });
 
   it("PATCH /categories/:id updates a category owned by the authenticated user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -258,21 +234,17 @@ describe("Noniq API", () => {
   });
 
   it("DELETE /categories/:id deletes a category owned by the authenticated user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -297,21 +269,17 @@ describe("Noniq API", () => {
   });
 
   it("PATCH /categories/:id rejects a category owned by another user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "First User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "First User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const firstLoginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const firstLoginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const firstToken = firstLoginResponse.body.token;
 
@@ -325,21 +293,17 @@ describe("Noniq API", () => {
 
     const categoryId = createResponse.body.category.id;
 
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Second User",
-        email: secondTestEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Second User",
+      email: secondTestEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const secondLoginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: secondTestEmail,
-        password: "password123",
-      });
+    const secondLoginResponse = await request(app).post("/auth/login").send({
+      email: secondTestEmail,
+      password: "password123",
+    });
 
     const secondToken = secondLoginResponse.body.token;
 
@@ -357,21 +321,17 @@ describe("Noniq API", () => {
   });
 
   it("DELETE /categories/:id rejects a category owned by another user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "First User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "First User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const firstLoginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const firstLoginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const firstToken = firstLoginResponse.body.token;
 
@@ -385,21 +345,17 @@ describe("Noniq API", () => {
 
     const categoryId = createResponse.body.category.id;
 
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Second User",
-        email: secondTestEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Second User",
+      email: secondTestEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const secondLoginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: secondTestEmail,
-        password: "password123",
-      });
+    const secondLoginResponse = await request(app).post("/auth/login").send({
+      email: secondTestEmail,
+      password: "password123",
+    });
 
     const secondToken = secondLoginResponse.body.token;
 
@@ -414,21 +370,17 @@ describe("Noniq API", () => {
   });
 
   it("POST /transactions creates and GET /transactions lists a transaction for the authenticated user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -477,26 +429,22 @@ describe("Noniq API", () => {
           type: "EXPENSE",
           categoryId,
         }),
-      ])
+      ]),
     );
   });
 
   it("POST /transactions rejects a category owned by another user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "First User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "First User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const firstLoginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const firstLoginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const firstToken = firstLoginResponse.body.token;
 
@@ -510,21 +458,17 @@ describe("Noniq API", () => {
 
     const categoryId = categoryResponse.body.category.id;
 
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Second User",
-        email: secondTestEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Second User",
+      email: secondTestEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const secondLoginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: secondTestEmail,
-        password: "password123",
-      });
+    const secondLoginResponse = await request(app).post("/auth/login").send({
+      email: secondTestEmail,
+      password: "password123",
+    });
 
     const secondToken = secondLoginResponse.body.token;
 
@@ -546,21 +490,17 @@ describe("Noniq API", () => {
   });
 
   it("POST /transactions rejects a type that does not match the category type", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -592,21 +532,17 @@ describe("Noniq API", () => {
   });
 
   it("GET /transactions filters transactions by type", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -626,11 +562,9 @@ describe("Noniq API", () => {
         type: "INCOME",
       });
 
-    const expenseCategoryId =
-      expenseCategoryResponse.body.category.id;
+    const expenseCategoryId = expenseCategoryResponse.body.category.id;
 
-    const incomeCategoryId =
-      incomeCategoryResponse.body.category.id;
+    const incomeCategoryId = incomeCategoryResponse.body.category.id;
 
     await request(app)
       .post("/transactions")
@@ -671,21 +605,17 @@ describe("Noniq API", () => {
   });
 
   it("GET /transactions filters transactions by categoryId", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -746,21 +676,17 @@ describe("Noniq API", () => {
   });
 
   it("GET /transactions filters transactions by date range", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -826,21 +752,17 @@ describe("Noniq API", () => {
   });
 
   it("GET /transactions rejects invalid filters", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -855,14 +777,14 @@ describe("Noniq API", () => {
     });
 
     const invalidCategoryResponse = await request(app)
-  .get("/transactions")
-  .query({ categoryId: "not-a-valid-uuid" })
-  .set("Authorization", `Bearer ${token}`);
+      .get("/transactions")
+      .query({ categoryId: "not-a-valid-uuid" })
+      .set("Authorization", `Bearer ${token}`);
 
-  expect(invalidCategoryResponse.status).toBe(400);
-  expect(invalidCategoryResponse.body).toEqual({
-  message: "Invalid category ID",
-  });
+    expect(invalidCategoryResponse.status).toBe(400);
+    expect(invalidCategoryResponse.body).toEqual({
+      message: "Invalid category ID",
+    });
 
     const invalidFromResponse = await request(app)
       .get("/transactions")
@@ -889,21 +811,17 @@ describe("Noniq API", () => {
   });
 
   it("PATCH /transactions/:id updates a transaction owned by the authenticated user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -950,21 +868,17 @@ describe("Noniq API", () => {
   });
 
   it("PATCH /transactions/:id rejects a category owned by another user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "First User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "First User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const firstLoginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const firstLoginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const firstToken = firstLoginResponse.body.token;
 
@@ -976,8 +890,7 @@ describe("Noniq API", () => {
         type: "EXPENSE",
       });
 
-    const firstCategoryId =
-      firstCategoryResponse.body.category.id;
+    const firstCategoryId = firstCategoryResponse.body.category.id;
 
     const transactionResponse = await request(app)
       .post("/transactions")
@@ -992,21 +905,17 @@ describe("Noniq API", () => {
 
     const transactionId = transactionResponse.body.transaction.id;
 
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Second User",
-        email: secondTestEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Second User",
+      email: secondTestEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const secondLoginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: secondTestEmail,
-        password: "password123",
-      });
+    const secondLoginResponse = await request(app).post("/auth/login").send({
+      email: secondTestEmail,
+      password: "password123",
+    });
 
     const secondToken = secondLoginResponse.body.token;
 
@@ -1018,8 +927,7 @@ describe("Noniq API", () => {
         type: "EXPENSE",
       });
 
-    const secondCategoryId =
-      secondCategoryResponse.body.category.id;
+    const secondCategoryId = secondCategoryResponse.body.category.id;
 
     const response = await request(app)
       .patch(`/transactions/${transactionId}`)
@@ -1035,21 +943,17 @@ describe("Noniq API", () => {
   });
 
   it("PATCH /transactions/:id rejects a type that does not match the category type", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -1069,11 +973,9 @@ describe("Noniq API", () => {
         type: "INCOME",
       });
 
-    const expenseCategoryId =
-      expenseCategoryResponse.body.category.id;
+    const expenseCategoryId = expenseCategoryResponse.body.category.id;
 
-    const incomeCategoryId =
-      incomeCategoryResponse.body.category.id;
+    const incomeCategoryId = incomeCategoryResponse.body.category.id;
 
     const transactionResponse = await request(app)
       .post("/transactions")
@@ -1119,21 +1021,17 @@ describe("Noniq API", () => {
   });
 
   it("DELETE /transactions/:id deletes a transaction owned by the authenticated user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -1169,32 +1067,27 @@ describe("Noniq API", () => {
       message: "Transaction deleted successfully",
     });
 
-    const deletedTransaction =
-      await prisma.transaction.findUnique({
-        where: {
-          id: transactionId,
-        },
-      });
+    const deletedTransaction = await prisma.transaction.findUnique({
+      where: {
+        id: transactionId,
+      },
+    });
 
     expect(deletedTransaction).toBeNull();
   });
 
   it("DELETE /transactions/:id rejects a transaction owned by another user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "First User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "First User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const firstLoginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const firstLoginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const firstToken = firstLoginResponse.body.token;
 
@@ -1221,21 +1114,17 @@ describe("Noniq API", () => {
 
     const transactionId = transactionResponse.body.transaction.id;
 
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Second User",
-        email: secondTestEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Second User",
+      email: secondTestEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const secondLoginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: secondTestEmail,
-        password: "password123",
-      });
+    const secondLoginResponse = await request(app).post("/auth/login").send({
+      email: secondTestEmail,
+      password: "password123",
+    });
 
     const secondToken = secondLoginResponse.body.token;
 
@@ -1248,12 +1137,11 @@ describe("Noniq API", () => {
       message: "Transaction not found",
     });
 
-    const transactionStillExists =
-      await prisma.transaction.findUnique({
-        where: {
-          id: transactionId,
-        },
-      });
+    const transactionStillExists = await prisma.transaction.findUnique({
+      where: {
+        id: transactionId,
+      },
+    });
 
     expect(transactionStillExists).not.toBeNull();
   });
@@ -1263,21 +1151,17 @@ describe("Noniq API", () => {
   // ─────────────────────────────────────────────
 
   it("POST /budgets creates a budget for an expense category", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -1317,27 +1201,21 @@ describe("Noniq API", () => {
       type: "EXPENSE",
     });
 
-    expect(response.body.budget.month).toBe(
-      "2026-09-01T00:00:00.000Z"
-    );
+    expect(response.body.budget.month).toBe("2026-09-01T00:00:00.000Z");
   });
 
   it("POST /budgets rejects an income category", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -1367,21 +1245,17 @@ describe("Noniq API", () => {
   });
 
   it("POST /budgets rejects a category owned by another user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "First User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "First User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const firstLoginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const firstLoginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const firstToken = firstLoginResponse.body.token;
 
@@ -1395,21 +1269,17 @@ describe("Noniq API", () => {
 
     const categoryId = categoryResponse.body.category.id;
 
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Second User",
-        email: secondTestEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Second User",
+      email: secondTestEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const secondLoginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: secondTestEmail,
-        password: "password123",
-      });
+    const secondLoginResponse = await request(app).post("/auth/login").send({
+      email: secondTestEmail,
+      password: "password123",
+    });
 
     const secondToken = secondLoginResponse.body.token;
 
@@ -1429,21 +1299,17 @@ describe("Noniq API", () => {
   });
 
   it("POST /budgets rejects a duplicate budget for the same category and month", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -1479,27 +1345,22 @@ describe("Noniq API", () => {
 
     expect(secondResponse.status).toBe(409);
     expect(secondResponse.body).toEqual({
-      message:
-        "A budget already exists for this category and month",
+      message: "A budget already exists for this category and month",
     });
   });
 
   it("GET /budgets calculates spent, remaining and percentage", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -1558,21 +1419,17 @@ describe("Noniq API", () => {
   });
 
   it("PATCH /budgets/:id updates a budget owned by the authenticated user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -1614,21 +1471,17 @@ describe("Noniq API", () => {
   });
 
   it("DELETE /budgets/:id deletes a budget and rejects another user's budget", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "First User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "First User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const firstLoginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const firstLoginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const firstToken = firstLoginResponse.body.token;
 
@@ -1682,24 +1535,19 @@ describe("Noniq API", () => {
 
     expect(secondBudgetResponse.status).toBe(201);
 
-    const secondBudgetId =
-      secondBudgetResponse.body.budget.id;
+    const secondBudgetId = secondBudgetResponse.body.budget.id;
 
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Second User",
-        email: secondTestEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Second User",
+      email: secondTestEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const secondLoginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: secondTestEmail,
-        password: "password123",
-      });
+    const secondLoginResponse = await request(app).post("/auth/login").send({
+      email: secondTestEmail,
+      password: "password123",
+    });
 
     const secondToken = secondLoginResponse.body.token;
 
@@ -1755,11 +1603,11 @@ describe("Noniq API", () => {
     const now = new Date();
 
     const currentMonthDate = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 15, 12, 0, 0)
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 15, 12, 0, 0),
     ).toISOString();
 
     const previousMonthDate = new Date(
-      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 15, 12, 0, 0)
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 15, 12, 0, 0),
     ).toISOString();
 
     await request(app)
@@ -1828,26 +1676,22 @@ describe("Noniq API", () => {
           amount: "250000",
           type: "EXPENSE",
         }),
-      ])
+      ]),
     );
   });
 
   it("GET /dashboard/categories groups expenses by category and sorts them by total", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -1943,22 +1787,18 @@ describe("Noniq API", () => {
     ]);
   });
 
-    it("GET /dashboard/categories filters expenses by date range", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+  it("GET /dashboard/categories filters expenses by date range", async () => {
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -2025,21 +1865,17 @@ describe("Noniq API", () => {
   });
 
   it("GET /dashboard/categories rejects invalid date filters", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -2080,7 +1916,7 @@ describe("Noniq API", () => {
       message: "From date must be before or equal to to date",
     });
   });
-  
+
   it("GET /categories rejects requests without authentication", async () => {
     const response = await request(app).get("/categories");
 
@@ -2101,26 +1937,22 @@ describe("Noniq API", () => {
     });
   });
 
-    // ─────────────────────────────────────────────
+  // ─────────────────────────────────────────────
   // SAVINGS GOALS
   // ─────────────────────────────────────────────
 
   it("POST /savings-goals creates a savings goal for the authenticated user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Savings User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Savings User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -2146,21 +1978,17 @@ describe("Noniq API", () => {
   });
 
   it("POST /savings-goals uses zero as the default current amount", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Savings User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Savings User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -2180,21 +2008,17 @@ describe("Noniq API", () => {
   });
 
   it("POST /savings-goals rejects invalid savings goal data", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Savings User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Savings User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -2213,21 +2037,17 @@ describe("Noniq API", () => {
   });
 
   it("GET /savings-goals calculates remaining and percentage", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Savings User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Savings User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -2259,21 +2079,17 @@ describe("Noniq API", () => {
   });
 
   it("PATCH /savings-goals/:id updates a savings goal owned by the authenticated user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Savings User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Savings User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -2310,62 +2126,52 @@ describe("Noniq API", () => {
   });
 
   it("PATCH /savings-goals/:id rejects an empty request body", async () => {
-  await request(app)
-    .post("/auth/register")
-    .send({
+    await request(app).post("/auth/register").send({
       name: "Savings User",
       email: testEmail,
       password: "password123",
       currency: "PYG",
     });
 
-  const loginResponse = await request(app)
-    .post("/auth/login")
-    .send({
+    const loginResponse = await request(app).post("/auth/login").send({
       email: testEmail,
       password: "password123",
     });
 
-  const token = loginResponse.body.token;
+    const token = loginResponse.body.token;
 
-  const createResponse = await request(app)
-    .post("/savings-goals")
-    .set("Authorization", `Bearer ${token}`)
-    .send({
-      name: "Notebook",
-      targetAmount: 8000000,
-      currentAmount: 1000000,
-    });
+    const createResponse = await request(app)
+      .post("/savings-goals")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Notebook",
+        targetAmount: 8000000,
+        currentAmount: 1000000,
+      });
 
-  const goalId = createResponse.body.savingsGoal.id;
+    const goalId = createResponse.body.savingsGoal.id;
 
-  const response = await request(app)
-    .patch(`/savings-goals/${goalId}`)
-    .set("Authorization", `Bearer ${token}`)
-    .send({});
+    const response = await request(app)
+      .patch(`/savings-goals/${goalId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({});
 
-  expect(response.status).toBe(400);
-  expect(response.body.message).toBe(
-    "Invalid savings goal data"
-  );
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe("Invalid savings goal data");
   });
 
   it("PATCH /savings-goals/:id rejects a savings goal owned by another user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "First User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "First User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const firstLogin = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const firstLogin = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const firstToken = firstLogin.body.token;
 
@@ -2381,21 +2187,17 @@ describe("Noniq API", () => {
 
     const secondEmail = `second-${Date.now()}@example.com`;
 
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Second User",
-        email: secondEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Second User",
+      email: secondEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const secondLogin = await request(app)
-      .post("/auth/login")
-      .send({
-        email: secondEmail,
-        password: "password123",
-      });
+    const secondLogin = await request(app).post("/auth/login").send({
+      email: secondEmail,
+      password: "password123",
+    });
 
     const secondToken = secondLogin.body.token;
 
@@ -2411,21 +2213,17 @@ describe("Noniq API", () => {
   });
 
   it("DELETE /savings-goals/:id deletes a savings goal owned by the authenticated user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Savings User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Savings User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -2445,7 +2243,7 @@ describe("Noniq API", () => {
 
     expect(deleteResponse.status).toBe(200);
     expect(deleteResponse.body.message).toBe(
-      "Savings goal deleted successfully"
+      "Savings goal deleted successfully",
     );
 
     const listResponse = await request(app)
@@ -2457,21 +2255,17 @@ describe("Noniq API", () => {
   });
 
   it("DELETE /savings-goals/:id rejects a savings goal owned by another user", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "First User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "First User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const firstLogin = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const firstLogin = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const firstToken = firstLogin.body.token;
 
@@ -2487,21 +2281,17 @@ describe("Noniq API", () => {
 
     const secondEmail = `second-${Date.now()}@example.com`;
 
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Second User",
-        email: secondEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Second User",
+      email: secondEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const secondLogin = await request(app)
-      .post("/auth/login")
-      .send({
-        email: secondEmail,
-        password: "password123",
-      });
+    const secondLogin = await request(app).post("/auth/login").send({
+      email: secondEmail,
+      password: "password123",
+    });
 
     const secondToken = secondLogin.body.token;
 
@@ -2513,26 +2303,22 @@ describe("Noniq API", () => {
     expect(response.body.message).toBe("Savings goal not found");
   });
 
-    // ─────────────────────────────────────────────
+  // ─────────────────────────────────────────────
   // CSV EXPORT
   // ─────────────────────────────────────────────
 
   it("GET /export/transactions.csv exports the authenticated user's transactions as CSV", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Export User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Export User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -2563,39 +2349,31 @@ describe("Noniq API", () => {
 
     expect(response.status).toBe(200);
 
-    expect(response.headers["content-type"]).toContain(
-      "text/csv"
-    );
+    expect(response.headers["content-type"]).toContain("text/csv");
 
     expect(response.headers["content-disposition"]).toBe(
-      'attachment; filename="noniq-transactions.csv"'
+      'attachment; filename="noniq-transactions.csv"',
     );
 
-    expect(response.text).toContain(
-      "date,type,category,description,amount"
-    );
+    expect(response.text).toContain("date,type,category,description,amount");
 
     expect(response.text).toContain(
-      "2026-09-15T12:00:00.000Z,EXPENSE,Food,Weekly groceries,250000"
+      "2026-09-15T12:00:00.000Z,EXPENSE,Food,Weekly groceries,250000",
     );
   });
 
   it("GET /export/transactions.csv exports only the authenticated user's transactions", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "First User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "First User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const firstLogin = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const firstLogin = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const firstToken = firstLogin.body.token;
 
@@ -2620,21 +2398,17 @@ describe("Noniq API", () => {
 
     const secondEmail = `second-${Date.now()}@example.com`;
 
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Second User",
-        email: secondEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Second User",
+      email: secondEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const secondLogin = await request(app)
-      .post("/auth/login")
-      .send({
-        email: secondEmail,
-        password: "password123",
-      });
+    const secondLogin = await request(app).post("/auth/login").send({
+      email: secondEmail,
+      password: "password123",
+    });
 
     const secondToken = secondLogin.body.token;
 
@@ -2663,31 +2437,23 @@ describe("Noniq API", () => {
 
     expect(response.status).toBe(200);
 
-    expect(response.text).toContain(
-      "First user transaction"
-    );
+    expect(response.text).toContain("First user transaction");
 
-    expect(response.text).not.toContain(
-      "Second user private transaction"
-    );
+    expect(response.text).not.toContain("Second user private transaction");
   });
 
   it("GET /export/transactions.csv escapes commas and quotes correctly", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Export User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Export User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -2718,31 +2484,23 @@ describe("Noniq API", () => {
 
     expect(response.status).toBe(200);
 
-    expect(response.text).toContain(
-      '"Food, Drinks"'
-    );
+    expect(response.text).toContain('"Food, Drinks"');
 
-    expect(response.text).toContain(
-      '"Lunch, ""special"""'
-    );
+    expect(response.text).toContain('"Lunch, ""special"""');
   });
 
   it("GET /export/transactions.csv returns only the header when the user has no transactions", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Export User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+    await request(app).post("/auth/register").send({
+      name: "Export User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -2751,27 +2509,21 @@ describe("Noniq API", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(200);
-    expect(response.text).toBe(
-      "date,type,category,description,amount"
-    );
+    expect(response.text).toBe("date,type,category,description,amount");
   });
 
-    it("DELETE /categories/:id returns 409 when the category is used by a transaction", async () => {
-    await request(app)
-      .post("/auth/register")
-      .send({
-        name: "Vitest User",
-        email: testEmail,
-        password: "password123",
-        currency: "PYG",
-      });
+  it("DELETE /categories/:id returns 409 when the category is used by a transaction", async () => {
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
 
-    const loginResponse = await request(app)
-      .post("/auth/login")
-      .send({
-        email: testEmail,
-        password: "password123",
-      });
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
 
     const token = loginResponse.body.token;
 
@@ -2816,5 +2568,4 @@ describe("Noniq API", () => {
 
     expect(categoryStillExists).not.toBeNull();
   });
-
 });
