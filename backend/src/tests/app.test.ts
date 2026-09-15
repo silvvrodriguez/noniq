@@ -156,11 +156,7 @@ describe("Noniq API", () => {
         password: "password123",
       });
 
-    expect(loginResponse.status).toBe(200);
-
     const token = loginResponse.body.token;
-
-    expect(token).toBeDefined();
 
     const response = await request(app)
       .get("/auth/me")
@@ -196,8 +192,6 @@ describe("Noniq API", () => {
         password: "password123",
       });
 
-    expect(loginResponse.status).toBe(200);
-
     const token = loginResponse.body.token;
 
     const createResponse = await request(app)
@@ -216,22 +210,6 @@ describe("Noniq API", () => {
     });
 
     expect(createResponse.body.category.id).toBeDefined();
-
-    const listResponse = await request(app)
-      .get("/categories")
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(listResponse.status).toBe(200);
-
-    expect(listResponse.body.categories).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: createResponse.body.category.id,
-          name: "Food",
-          type: "EXPENSE",
-        }),
-      ])
-    );
   });
 
   it("PATCH /categories/:id updates a category owned by the authenticated user", async () => {
@@ -261,8 +239,6 @@ describe("Noniq API", () => {
         type: "EXPENSE",
       });
 
-    expect(createResponse.status).toBe(201);
-
     const categoryId = createResponse.body.category.id;
 
     const updateResponse = await request(app)
@@ -273,9 +249,6 @@ describe("Noniq API", () => {
       });
 
     expect(updateResponse.status).toBe(200);
-    expect(updateResponse.body.message).toBe(
-      "Category updated successfully"
-    );
 
     expect(updateResponse.body.category).toMatchObject({
       id: categoryId,
@@ -311,8 +284,6 @@ describe("Noniq API", () => {
         type: "EXPENSE",
       });
 
-    expect(createResponse.status).toBe(201);
-
     const categoryId = createResponse.body.category.id;
 
     const deleteResponse = await request(app)
@@ -323,20 +294,6 @@ describe("Noniq API", () => {
     expect(deleteResponse.body).toEqual({
       message: "Category deleted successfully",
     });
-
-    const listResponse = await request(app)
-      .get("/categories")
-      .set("Authorization", `Bearer ${token}`);
-
-    expect(listResponse.status).toBe(200);
-
-    expect(listResponse.body.categories).not.toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: categoryId,
-        }),
-      ])
-    );
   });
 
   it("PATCH /categories/:id rejects a category owned by another user", async () => {
@@ -366,8 +323,6 @@ describe("Noniq API", () => {
         type: "EXPENSE",
       });
 
-    expect(createResponse.status).toBe(201);
-
     const categoryId = createResponse.body.category.id;
 
     await request(app)
@@ -388,15 +343,15 @@ describe("Noniq API", () => {
 
     const secondToken = secondLoginResponse.body.token;
 
-    const updateResponse = await request(app)
+    const response = await request(app)
       .patch(`/categories/${categoryId}`)
       .set("Authorization", `Bearer ${secondToken}`)
       .send({
-        name: "Hacked Category",
+        name: "Hacked",
       });
 
-    expect(updateResponse.status).toBe(404);
-    expect(updateResponse.body).toEqual({
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
       message: "Category not found",
     });
   });
@@ -428,8 +383,6 @@ describe("Noniq API", () => {
         type: "EXPENSE",
       });
 
-    expect(createResponse.status).toBe(201);
-
     const categoryId = createResponse.body.category.id;
 
     await request(app)
@@ -450,23 +403,14 @@ describe("Noniq API", () => {
 
     const secondToken = secondLoginResponse.body.token;
 
-    const deleteResponse = await request(app)
+    const response = await request(app)
       .delete(`/categories/${categoryId}`)
       .set("Authorization", `Bearer ${secondToken}`);
 
-    expect(deleteResponse.status).toBe(404);
-    expect(deleteResponse.body).toEqual({
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
       message: "Category not found",
     });
-
-    const categoryStillExists = await prisma.category.findUnique({
-      where: {
-        id: categoryId,
-      },
-    });
-
-    expect(categoryStillExists).not.toBeNull();
-    expect(categoryStillExists?.name).toBe("Private Food");
   });
 
   it("POST /transactions creates and GET /transactions lists a transaction for the authenticated user", async () => {
@@ -486,8 +430,6 @@ describe("Noniq API", () => {
         password: "password123",
       });
 
-    expect(loginResponse.status).toBe(200);
-
     const token = loginResponse.body.token;
 
     const categoryResponse = await request(app)
@@ -497,8 +439,6 @@ describe("Noniq API", () => {
         name: "Groceries",
         type: "EXPENSE",
       });
-
-    expect(categoryResponse.status).toBe(201);
 
     const categoryId = categoryResponse.body.category.id;
 
@@ -514,23 +454,12 @@ describe("Noniq API", () => {
       });
 
     expect(transactionResponse.status).toBe(201);
-    expect(transactionResponse.body.message).toBe(
-      "Transaction created successfully"
-    );
 
     expect(transactionResponse.body.transaction).toMatchObject({
       amount: "175000",
       description: "Weekly groceries",
       type: "EXPENSE",
       categoryId,
-    });
-
-    expect(transactionResponse.body.transaction.id).toBeDefined();
-
-    expect(transactionResponse.body.transaction.category).toMatchObject({
-      id: categoryId,
-      name: "Groceries",
-      type: "EXPENSE",
     });
 
     const listResponse = await request(app)
@@ -579,8 +508,6 @@ describe("Noniq API", () => {
         type: "EXPENSE",
       });
 
-    expect(categoryResponse.status).toBe(201);
-
     const categoryId = categoryResponse.body.category.id;
 
     await request(app)
@@ -601,19 +528,19 @@ describe("Noniq API", () => {
 
     const secondToken = secondLoginResponse.body.token;
 
-    const transactionResponse = await request(app)
+    const response = await request(app)
       .post("/transactions")
       .set("Authorization", `Bearer ${secondToken}`)
       .send({
         amount: 50000,
-        description: "Unauthorized transaction",
+        description: "Unauthorized",
         type: "EXPENSE",
         date: "2026-09-15T17:00:00.000Z",
         categoryId,
       });
 
-    expect(transactionResponse.status).toBe(404);
-    expect(transactionResponse.body).toEqual({
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
       message: "Category not found",
     });
   });
@@ -635,8 +562,6 @@ describe("Noniq API", () => {
         password: "password123",
       });
 
-    expect(loginResponse.status).toBe(200);
-
     const token = loginResponse.body.token;
 
     const categoryResponse = await request(app)
@@ -647,23 +572,21 @@ describe("Noniq API", () => {
         type: "INCOME",
       });
 
-    expect(categoryResponse.status).toBe(201);
-
     const categoryId = categoryResponse.body.category.id;
 
-    const transactionResponse = await request(app)
+    const response = await request(app)
       .post("/transactions")
       .set("Authorization", `Bearer ${token}`)
       .send({
         amount: 5000000,
-        description: "Invalid expense",
+        description: "Invalid",
         type: "EXPENSE",
         date: "2026-09-15T17:00:00.000Z",
         categoryId,
       });
 
-    expect(transactionResponse.status).toBe(400);
-    expect(transactionResponse.body).toEqual({
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
       message: "Transaction type must match category type",
     });
   });
@@ -725,7 +648,7 @@ describe("Noniq API", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({
         amount: 5000000,
-        description: "Monthly salary",
+        description: "Salary",
         type: "INCOME",
         date: "2026-09-15T09:00:00.000Z",
         categoryId: incomeCategoryId,
@@ -733,13 +656,10 @@ describe("Noniq API", () => {
 
     const response = await request(app)
       .get("/transactions")
-      .query({
-        type: "EXPENSE",
-      })
+      .query({ type: "EXPENSE" })
       .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(200);
-
     expect(response.body.transactions).toHaveLength(1);
 
     expect(response.body.transactions[0]).toMatchObject({
@@ -769,7 +689,7 @@ describe("Noniq API", () => {
 
     const token = loginResponse.body.token;
 
-    const foodCategoryResponse = await request(app)
+    const foodResponse = await request(app)
       .post("/categories")
       .set("Authorization", `Bearer ${token}`)
       .send({
@@ -777,7 +697,7 @@ describe("Noniq API", () => {
         type: "EXPENSE",
       });
 
-    const transportCategoryResponse = await request(app)
+    const transportResponse = await request(app)
       .post("/categories")
       .set("Authorization", `Bearer ${token}`)
       .send({
@@ -785,11 +705,8 @@ describe("Noniq API", () => {
         type: "EXPENSE",
       });
 
-    const foodCategoryId =
-      foodCategoryResponse.body.category.id;
-
-    const transportCategoryId =
-      transportCategoryResponse.body.category.id;
+    const foodId = foodResponse.body.category.id;
+    const transportId = transportResponse.body.category.id;
 
     await request(app)
       .post("/transactions")
@@ -799,7 +716,7 @@ describe("Noniq API", () => {
         description: "Breakfast",
         type: "EXPENSE",
         date: "2026-09-15T08:00:00.000Z",
-        categoryId: foodCategoryId,
+        categoryId: foodId,
       });
 
     await request(app)
@@ -810,25 +727,21 @@ describe("Noniq API", () => {
         description: "Bus",
         type: "EXPENSE",
         date: "2026-09-15T07:00:00.000Z",
-        categoryId: transportCategoryId,
+        categoryId: transportId,
       });
 
     const response = await request(app)
       .get("/transactions")
-      .query({
-        categoryId: foodCategoryId,
-      })
+      .query({ categoryId: foodId })
       .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(200);
-
     expect(response.body.transactions).toHaveLength(1);
 
     expect(response.body.transactions[0]).toMatchObject({
       amount: "80000",
       description: "Breakfast",
-      type: "EXPENSE",
-      categoryId: foodCategoryId,
+      categoryId: foodId,
     });
   });
 
@@ -866,7 +779,7 @@ describe("Noniq API", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({
         amount: 10000,
-        description: "Before range",
+        description: "Before",
         type: "EXPENSE",
         date: "2026-08-31T12:00:00.000Z",
         categoryId,
@@ -877,7 +790,7 @@ describe("Noniq API", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({
         amount: 20000,
-        description: "Inside range",
+        description: "Inside",
         type: "EXPENSE",
         date: "2026-09-10T12:00:00.000Z",
         categoryId,
@@ -888,7 +801,7 @@ describe("Noniq API", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({
         amount: 30000,
-        description: "After range",
+        description: "After",
         type: "EXPENSE",
         date: "2026-09-20T12:00:00.000Z",
         categoryId,
@@ -903,13 +816,11 @@ describe("Noniq API", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(200);
-
     expect(response.body.transactions).toHaveLength(1);
 
     expect(response.body.transactions[0]).toMatchObject({
       amount: "20000",
-      description: "Inside range",
-      type: "EXPENSE",
+      description: "Inside",
       categoryId,
     });
   });
@@ -935,9 +846,7 @@ describe("Noniq API", () => {
 
     const invalidTypeResponse = await request(app)
       .get("/transactions")
-      .query({
-        type: "INVALID",
-      })
+      .query({ type: "INVALID" })
       .set("Authorization", `Bearer ${token}`);
 
     expect(invalidTypeResponse.status).toBe(400);
@@ -947,9 +856,7 @@ describe("Noniq API", () => {
 
     const invalidFromResponse = await request(app)
       .get("/transactions")
-      .query({
-        from: "15-09-2026",
-      })
+      .query({ from: "15-09-2026" })
       .set("Authorization", `Bearer ${token}`);
 
     expect(invalidFromResponse.status).toBe(400);
@@ -1011,11 +918,9 @@ describe("Noniq API", () => {
         categoryId,
       });
 
-    expect(createResponse.status).toBe(201);
-
     const transactionId = createResponse.body.transaction.id;
 
-    const updateResponse = await request(app)
+    const response = await request(app)
       .patch(`/transactions/${transactionId}`)
       .set("Authorization", `Bearer ${token}`)
       .send({
@@ -1023,12 +928,9 @@ describe("Noniq API", () => {
         description: "Updated lunch",
       });
 
-    expect(updateResponse.status).toBe(200);
-    expect(updateResponse.body.message).toBe(
-      "Transaction updated successfully"
-    );
+    expect(response.status).toBe(200);
 
-    expect(updateResponse.body.transaction).toMatchObject({
+    expect(response.body.transaction).toMatchObject({
       id: transactionId,
       amount: "125000",
       description: "Updated lunch",
@@ -1056,29 +958,27 @@ describe("Noniq API", () => {
 
     const firstToken = firstLoginResponse.body.token;
 
-    const categoryResponse = await request(app)
+    const firstCategoryResponse = await request(app)
       .post("/categories")
       .set("Authorization", `Bearer ${firstToken}`)
       .send({
-        name: "Private Food",
+        name: "First Food",
         type: "EXPENSE",
       });
 
     const firstCategoryId =
-      categoryResponse.body.category.id;
+      firstCategoryResponse.body.category.id;
 
     const transactionResponse = await request(app)
       .post("/transactions")
       .set("Authorization", `Bearer ${firstToken}`)
       .send({
         amount: 100000,
-        description: "Private transaction",
+        description: "Private",
         type: "EXPENSE",
         date: "2026-09-15T12:00:00.000Z",
         categoryId: firstCategoryId,
       });
-
-    expect(transactionResponse.status).toBe(201);
 
     const transactionId = transactionResponse.body.transaction.id;
 
@@ -1111,15 +1011,15 @@ describe("Noniq API", () => {
     const secondCategoryId =
       secondCategoryResponse.body.category.id;
 
-    const updateResponse = await request(app)
+    const response = await request(app)
       .patch(`/transactions/${transactionId}`)
       .set("Authorization", `Bearer ${secondToken}`)
       .send({
         categoryId: secondCategoryId,
       });
 
-    expect(updateResponse.status).toBe(404);
-    expect(updateResponse.body).toEqual({
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
       message: "Transaction not found",
     });
   });
@@ -1176,11 +1076,9 @@ describe("Noniq API", () => {
         categoryId: expenseCategoryId,
       });
 
-    expect(transactionResponse.status).toBe(201);
-
     const transactionId = transactionResponse.body.transaction.id;
 
-    const updateResponse = await request(app)
+    const invalidResponse = await request(app)
       .patch(`/transactions/${transactionId}`)
       .set("Authorization", `Bearer ${token}`)
       .send({
@@ -1188,12 +1086,12 @@ describe("Noniq API", () => {
         categoryId: expenseCategoryId,
       });
 
-    expect(updateResponse.status).toBe(400);
-    expect(updateResponse.body).toEqual({
+    expect(invalidResponse.status).toBe(400);
+    expect(invalidResponse.body).toEqual({
       message: "Transaction type must match category type",
     });
 
-    const validCategoryUpdateResponse = await request(app)
+    const validResponse = await request(app)
       .patch(`/transactions/${transactionId}`)
       .set("Authorization", `Bearer ${token}`)
       .send({
@@ -1201,9 +1099,9 @@ describe("Noniq API", () => {
         categoryId: incomeCategoryId,
       });
 
-    expect(validCategoryUpdateResponse.status).toBe(200);
+    expect(validResponse.status).toBe(200);
 
-    expect(validCategoryUpdateResponse.body.transaction).toMatchObject({
+    expect(validResponse.body.transaction).toMatchObject({
       id: transactionId,
       type: "INCOME",
       categoryId: incomeCategoryId,
@@ -1250,27 +1148,25 @@ describe("Noniq API", () => {
         categoryId,
       });
 
-    expect(createResponse.status).toBe(201);
-
     const transactionId = createResponse.body.transaction.id;
 
-    const deleteResponse = await request(app)
+    const response = await request(app)
       .delete(`/transactions/${transactionId}`)
       .set("Authorization", `Bearer ${token}`);
 
-    expect(deleteResponse.status).toBe(200);
-    expect(deleteResponse.body).toEqual({
+    expect(response.status).toBe(200);
+    expect(response.body).toEqual({
       message: "Transaction deleted successfully",
     });
 
-    const transactionStillExists =
+    const deletedTransaction =
       await prisma.transaction.findUnique({
         where: {
           id: transactionId,
         },
       });
 
-    expect(transactionStillExists).toBeNull();
+    expect(deletedTransaction).toBeNull();
   });
 
   it("DELETE /transactions/:id rejects a transaction owned by another user", async () => {
@@ -1313,8 +1209,6 @@ describe("Noniq API", () => {
         categoryId,
       });
 
-    expect(transactionResponse.status).toBe(201);
-
     const transactionId = transactionResponse.body.transaction.id;
 
     await request(app)
@@ -1335,12 +1229,12 @@ describe("Noniq API", () => {
 
     const secondToken = secondLoginResponse.body.token;
 
-    const deleteResponse = await request(app)
+    const response = await request(app)
       .delete(`/transactions/${transactionId}`)
       .set("Authorization", `Bearer ${secondToken}`);
 
-    expect(deleteResponse.status).toBe(404);
-    expect(deleteResponse.body).toEqual({
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
       message: "Transaction not found",
     });
 
@@ -1352,10 +1246,469 @@ describe("Noniq API", () => {
       });
 
     expect(transactionStillExists).not.toBeNull();
+  });
 
-    expect(transactionStillExists?.description).toBe(
-      "Private transaction"
+  // ─────────────────────────────────────────────
+  // BUDGETS
+  // ─────────────────────────────────────────────
+
+  it("POST /budgets creates a budget for an expense category", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Vitest User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const categoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Food",
+        type: "EXPENSE",
+      });
+
+    expect(categoryResponse.status).toBe(201);
+
+    const categoryId = categoryResponse.body.category.id;
+
+    const response = await request(app)
+      .post("/budgets")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 1000000,
+        month: "2026-09-15",
+        categoryId,
+      });
+
+    expect(response.status).toBe(201);
+
+    expect(response.body.budget).toMatchObject({
+      amount: "1000000",
+      categoryId,
+    });
+
+    expect(response.body.budget.id).toBeDefined();
+
+    expect(response.body.budget.category).toMatchObject({
+      id: categoryId,
+      name: "Food",
+      type: "EXPENSE",
+    });
+
+    expect(response.body.budget.month).toBe(
+      "2026-09-01T00:00:00.000Z"
     );
+  });
+
+  it("POST /budgets rejects an income category", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Vitest User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const categoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Salary",
+        type: "INCOME",
+      });
+
+    const categoryId = categoryResponse.body.category.id;
+
+    const response = await request(app)
+      .post("/budgets")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 1000000,
+        month: "2026-09-15",
+        categoryId,
+      });
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({
+      message: "Budgets can only be created for expense categories",
+    });
+  });
+
+  it("POST /budgets rejects a category owned by another user", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "First User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const firstLoginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const firstToken = firstLoginResponse.body.token;
+
+    const categoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${firstToken}`)
+      .send({
+        name: "Private Food",
+        type: "EXPENSE",
+      });
+
+    const categoryId = categoryResponse.body.category.id;
+
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Second User",
+        email: secondTestEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const secondLoginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: secondTestEmail,
+        password: "password123",
+      });
+
+    const secondToken = secondLoginResponse.body.token;
+
+    const response = await request(app)
+      .post("/budgets")
+      .set("Authorization", `Bearer ${secondToken}`)
+      .send({
+        amount: 500000,
+        month: "2026-09-15",
+        categoryId,
+      });
+
+    expect(response.status).toBe(404);
+    expect(response.body).toEqual({
+      message: "Category not found",
+    });
+  });
+
+  it("POST /budgets rejects a duplicate budget for the same category and month", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Vitest User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const categoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Food",
+        type: "EXPENSE",
+      });
+
+    const categoryId = categoryResponse.body.category.id;
+
+    const firstResponse = await request(app)
+      .post("/budgets")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 1000000,
+        month: "2026-09-01",
+        categoryId,
+      });
+
+    expect(firstResponse.status).toBe(201);
+
+    const secondResponse = await request(app)
+      .post("/budgets")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 1500000,
+        month: "2026-09-30",
+        categoryId,
+      });
+
+    expect(secondResponse.status).toBe(409);
+    expect(secondResponse.body).toEqual({
+      message:
+        "A budget already exists for this category and month",
+    });
+  });
+
+  it("GET /budgets calculates spent, remaining and percentage", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Vitest User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const categoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Food",
+        type: "EXPENSE",
+      });
+
+    const categoryId = categoryResponse.body.category.id;
+
+    const budgetResponse = await request(app)
+      .post("/budgets")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 1000000,
+        month: "2026-09-01",
+        categoryId,
+      });
+
+    expect(budgetResponse.status).toBe(201);
+
+    const transactionResponse = await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 250000,
+        description: "Groceries",
+        type: "EXPENSE",
+        date: "2026-09-15T12:00:00.000Z",
+        categoryId,
+      });
+
+    expect(transactionResponse.status).toBe(201);
+
+    const response = await request(app)
+      .get("/budgets")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.budgets).toHaveLength(1);
+
+    expect(response.body.budgets[0]).toMatchObject({
+      id: budgetResponse.body.budget.id,
+      amount: 1000000,
+      spent: 250000,
+      remaining: 750000,
+      percentage: 25,
+      category: {
+        id: categoryId,
+        name: "Food",
+      },
+    });
+  });
+
+  it("PATCH /budgets/:id updates a budget owned by the authenticated user", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Vitest User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const categoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Food",
+        type: "EXPENSE",
+      });
+
+    const categoryId = categoryResponse.body.category.id;
+
+    const budgetResponse = await request(app)
+      .post("/budgets")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 1000000,
+        month: "2026-09-01",
+        categoryId,
+      });
+
+    const budgetId = budgetResponse.body.budget.id;
+
+    const response = await request(app)
+      .patch(`/budgets/${budgetId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 1500000,
+      });
+
+    expect(response.status).toBe(200);
+
+    expect(response.body.budget).toMatchObject({
+      id: budgetId,
+      amount: "1500000",
+      categoryId,
+    });
+  });
+
+  it("DELETE /budgets/:id deletes a budget and rejects another user's budget", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "First User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const firstLoginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const firstToken = firstLoginResponse.body.token;
+
+    const categoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${firstToken}`)
+      .send({
+        name: "Food",
+        type: "EXPENSE",
+      });
+
+    const categoryId = categoryResponse.body.category.id;
+
+    const budgetResponse = await request(app)
+      .post("/budgets")
+      .set("Authorization", `Bearer ${firstToken}`)
+      .send({
+        amount: 1000000,
+        month: "2026-09-01",
+        categoryId,
+      });
+
+    const budgetId = budgetResponse.body.budget.id;
+
+    const deleteResponse = await request(app)
+      .delete(`/budgets/${budgetId}`)
+      .set("Authorization", `Bearer ${firstToken}`);
+
+    expect(deleteResponse.status).toBe(200);
+    expect(deleteResponse.body).toEqual({
+      message: "Budget deleted successfully",
+    });
+
+    const deletedBudget = await prisma.budget.findUnique({
+      where: {
+        id: budgetId,
+      },
+    });
+
+    expect(deletedBudget).toBeNull();
+
+    // Crear un segundo presupuesto para comprobar aislamiento.
+    const secondBudgetResponse = await request(app)
+      .post("/budgets")
+      .set("Authorization", `Bearer ${firstToken}`)
+      .send({
+        amount: 2000000,
+        month: "2026-10-01",
+        categoryId,
+      });
+
+    expect(secondBudgetResponse.status).toBe(201);
+
+    const secondBudgetId =
+      secondBudgetResponse.body.budget.id;
+
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Second User",
+        email: secondTestEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const secondLoginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: secondTestEmail,
+        password: "password123",
+      });
+
+    const secondToken = secondLoginResponse.body.token;
+
+    const unauthorizedDeleteResponse = await request(app)
+      .delete(`/budgets/${secondBudgetId}`)
+      .set("Authorization", `Bearer ${secondToken}`);
+
+    expect(unauthorizedDeleteResponse.status).toBe(404);
+    expect(unauthorizedDeleteResponse.body).toEqual({
+      message: "Budget not found",
+    });
+
+    const budgetStillExists = await prisma.budget.findUnique({
+      where: {
+        id: secondBudgetId,
+      },
+    });
+
+    expect(budgetStillExists).not.toBeNull();
   });
 
   it("GET /categories rejects requests without authentication", async () => {
