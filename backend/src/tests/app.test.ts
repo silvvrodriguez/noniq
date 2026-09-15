@@ -1711,6 +1711,366 @@ describe("Noniq API", () => {
     expect(budgetStillExists).not.toBeNull();
   });
 
+  // ─────────────────────────────────────────────
+  // DASHBOARD
+  // ─────────────────────────────────────────────
+
+  it("GET /dashboard/summary returns the authenticated user's financial summary", async () => {
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
+
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
+
+    const token = loginResponse.body.token;
+
+    const expenseCategoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ name: "Food", type: "EXPENSE" });
+
+    const incomeCategoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ name: "Salary", type: "INCOME" });
+
+    const expenseCategoryId = expenseCategoryResponse.body.category.id;
+    const incomeCategoryId = incomeCategoryResponse.body.category.id;
+    const now = new Date();
+
+    const currentMonthDate = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 15, 12, 0, 0)
+    ).toISOString();
+
+    const previousMonthDate = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 15, 12, 0, 0)
+    ).toISOString();
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 5000000,
+        description: "Monthly salary",
+        type: "INCOME",
+        date: currentMonthDate,
+        categoryId: incomeCategoryId,
+      });
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 750000,
+        description: "Current month groceries",
+        type: "EXPENSE",
+        date: currentMonthDate,
+        categoryId: expenseCategoryId,
+      });
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 250000,
+        description: "Previous month groceries",
+        type: "EXPENSE",
+        date: previousMonthDate,
+        categoryId: expenseCategoryId,
+      });
+
+    const response = await request(app)
+      .get("/dashboard/summary")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toMatchObject({
+      message: "Dashboard summary",
+      totalIncome: 5000000,
+      totalExpenses: 1000000,
+      balance: 4000000,
+      monthlyIncome: 5000000,
+      monthlyExpenses: 750000,
+    });
+
+    expect(response.body.userId).toBeDefined();
+    expect(response.body.recentTransactions).toHaveLength(3);
+    expect(response.body.recentTransactions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          description: "Monthly salary",
+          amount: "5000000",
+          type: "INCOME",
+        }),
+        expect.objectContaining({
+          description: "Current month groceries",
+          amount: "750000",
+          type: "EXPENSE",
+        }),
+        expect.objectContaining({
+          description: "Previous month groceries",
+          amount: "250000",
+          type: "EXPENSE",
+        }),
+      ])
+    );
+  });
+
+  it("GET /dashboard/categories groups expenses by category and sorts them by total", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Vitest User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const foodResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Food",
+        type: "EXPENSE",
+      });
+
+    const transportResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Transport",
+        type: "EXPENSE",
+      });
+
+    const incomeResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Salary",
+        type: "INCOME",
+      });
+
+    const foodId = foodResponse.body.category.id;
+    const transportId = transportResponse.body.category.id;
+    const incomeId = incomeResponse.body.category.id;
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 200000,
+        description: "Groceries",
+        type: "EXPENSE",
+        date: "2026-09-10T12:00:00.000Z",
+        categoryId: foodId,
+      });
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 150000,
+        description: "Restaurant",
+        type: "EXPENSE",
+        date: "2026-09-11T12:00:00.000Z",
+        categoryId: foodId,
+      });
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 100000,
+        description: "Bus",
+        type: "EXPENSE",
+        date: "2026-09-12T12:00:00.000Z",
+        categoryId: transportId,
+      });
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 5000000,
+        description: "Salary",
+        type: "INCOME",
+        date: "2026-09-12T12:00:00.000Z",
+        categoryId: incomeId,
+      });
+
+    const response = await request(app)
+      .get("/dashboard/categories")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+
+    expect(response.body.categories).toEqual([
+      {
+        categoryId: foodId,
+        categoryName: "Food",
+        total: 350000,
+      },
+      {
+        categoryId: transportId,
+        categoryName: "Transport",
+        total: 100000,
+      },
+    ]);
+  });
+
+    it("GET /dashboard/categories filters expenses by date range", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Vitest User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const categoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Food",
+        type: "EXPENSE",
+      });
+
+    const categoryId = categoryResponse.body.category.id;
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 100000,
+        description: "Before range",
+        type: "EXPENSE",
+        date: "2026-08-31T12:00:00.000Z",
+        categoryId,
+      });
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 250000,
+        description: "Inside range",
+        type: "EXPENSE",
+        date: "2026-09-10T12:00:00.000Z",
+        categoryId,
+      });
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 500000,
+        description: "After range",
+        type: "EXPENSE",
+        date: "2026-09-20T12:00:00.000Z",
+        categoryId,
+      });
+
+    const response = await request(app)
+      .get("/dashboard/categories")
+      .query({
+        from: "2026-09-01",
+        to: "2026-09-15",
+      })
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+
+    expect(response.body.categories).toEqual([
+      {
+        categoryId,
+        categoryName: "Food",
+        total: 250000,
+      },
+    ]);
+  });
+
+  it("GET /dashboard/categories rejects invalid date filters", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Vitest User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const invalidFromResponse = await request(app)
+      .get("/dashboard/categories")
+      .query({
+        from: "15-09-2026",
+      })
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(invalidFromResponse.status).toBe(400);
+    expect(invalidFromResponse.body).toEqual({
+      message: "Invalid from date. Use YYYY-MM-DD",
+    });
+
+    const invalidToResponse = await request(app)
+      .get("/dashboard/categories")
+      .query({
+        to: "not-a-date",
+      })
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(invalidToResponse.status).toBe(400);
+    expect(invalidToResponse.body).toEqual({
+      message: "Invalid to date. Use YYYY-MM-DD",
+    });
+
+    const invalidRangeResponse = await request(app)
+      .get("/dashboard/categories")
+      .query({
+        from: "2026-09-20",
+        to: "2026-09-10",
+      })
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(invalidRangeResponse.status).toBe(400);
+    expect(invalidRangeResponse.body).toEqual({
+      message: "From date must be before or equal to to date",
+    });
+  });
+  
   it("GET /categories rejects requests without authentication", async () => {
     const response = await request(app).get("/categories");
 
