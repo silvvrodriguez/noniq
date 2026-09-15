@@ -2704,5 +2704,66 @@ describe("Noniq API", () => {
       "date,type,category,description,amount"
     );
   });
-  
+
+    it("DELETE /categories/:id returns 409 when the category is used by a transaction", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Vitest User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const categoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Protected Category",
+        type: "EXPENSE",
+      });
+
+    const categoryId = categoryResponse.body.category.id;
+
+    const transactionResponse = await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 100000,
+        description: "Transaction using category",
+        type: "EXPENSE",
+        date: "2026-09-15T12:00:00.000Z",
+        categoryId,
+      });
+
+    expect(transactionResponse.status).toBe(201);
+
+    const response = await request(app)
+      .delete(`/categories/${categoryId}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(409);
+    expect(response.body).toEqual({
+      message:
+        "Category cannot be deleted because it is being used by transactions or budgets",
+    });
+
+    const categoryStillExists = await prisma.category.findUnique({
+      where: {
+        id: categoryId,
+      },
+    });
+
+    expect(categoryStillExists).not.toBeNull();
+  });
+
 });

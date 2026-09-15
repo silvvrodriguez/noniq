@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { z } from "zod";
+import { Prisma } from "../generated/prisma/client.js";
 
 import { prisma } from "../lib/prisma.js";
 import {
@@ -145,11 +146,25 @@ router.delete(
       });
     }
 
-    await prisma.category.delete({
-      where: {
-        id: category.id,
-      },
-    });
+    try {
+      await prisma.category.delete({
+        where: {
+          id: category.id,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2003"
+      ) {
+        return res.status(409).json({
+          message:
+            "Category cannot be deleted because it is being used by transactions or budgets",
+        });
+      }
+
+      throw error;
+    }
 
     return res.status(200).json({
       message: "Category deleted successfully",
