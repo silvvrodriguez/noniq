@@ -6,11 +6,14 @@ import { prisma } from "../lib/prisma.js";
 
 describe("Noniq API", () => {
   const testEmail = "vitest@noniq.test";
+  const secondTestEmail = "vitest-second@noniq.test";
 
   afterEach(async () => {
     await prisma.user.deleteMany({
       where: {
-        email: testEmail,
+        email: {
+          in: [testEmail, secondTestEmail],
+        },
       },
     });
   });
@@ -229,6 +232,241 @@ describe("Noniq API", () => {
         }),
       ])
     );
+  });
+
+  it("PATCH /categories/:id updates a category owned by the authenticated user", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Vitest User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const createResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Food",
+        type: "EXPENSE",
+      });
+
+    expect(createResponse.status).toBe(201);
+
+    const categoryId = createResponse.body.category.id;
+
+    const updateResponse = await request(app)
+      .patch(`/categories/${categoryId}`)
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Groceries",
+      });
+
+    expect(updateResponse.status).toBe(200);
+    expect(updateResponse.body.message).toBe(
+      "Category updated successfully"
+    );
+
+    expect(updateResponse.body.category).toMatchObject({
+      id: categoryId,
+      name: "Groceries",
+      type: "EXPENSE",
+    });
+  });
+
+  it("DELETE /categories/:id deletes a category owned by the authenticated user", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Vitest User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const token = loginResponse.body.token;
+
+    const createResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Food",
+        type: "EXPENSE",
+      });
+
+    expect(createResponse.status).toBe(201);
+
+    const categoryId = createResponse.body.category.id;
+
+    const deleteResponse = await request(app)
+      .delete(`/categories/${categoryId}`)
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(deleteResponse.status).toBe(200);
+    expect(deleteResponse.body).toEqual({
+      message: "Category deleted successfully",
+    });
+
+    const listResponse = await request(app)
+      .get("/categories")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(listResponse.status).toBe(200);
+
+    expect(listResponse.body.categories).not.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: categoryId,
+        }),
+      ])
+    );
+  });
+
+  it("PATCH /categories/:id rejects a category owned by another user", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "First User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const firstLoginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const firstToken = firstLoginResponse.body.token;
+
+    const createResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${firstToken}`)
+      .send({
+        name: "Private Food",
+        type: "EXPENSE",
+      });
+
+    expect(createResponse.status).toBe(201);
+
+    const categoryId = createResponse.body.category.id;
+
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Second User",
+        email: secondTestEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const secondLoginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: secondTestEmail,
+        password: "password123",
+      });
+
+    const secondToken = secondLoginResponse.body.token;
+
+    const updateResponse = await request(app)
+      .patch(`/categories/${categoryId}`)
+      .set("Authorization", `Bearer ${secondToken}`)
+      .send({
+        name: "Hacked Category",
+      });
+
+    expect(updateResponse.status).toBe(404);
+    expect(updateResponse.body).toEqual({
+      message: "Category not found",
+    });
+  });
+
+  it("DELETE /categories/:id rejects a category owned by another user", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "First User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const firstLoginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    const firstToken = firstLoginResponse.body.token;
+
+    const createResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${firstToken}`)
+      .send({
+        name: "Private Food",
+        type: "EXPENSE",
+      });
+
+    expect(createResponse.status).toBe(201);
+
+    const categoryId = createResponse.body.category.id;
+
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Second User",
+        email: secondTestEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const secondLoginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: secondTestEmail,
+        password: "password123",
+      });
+
+    const secondToken = secondLoginResponse.body.token;
+
+    const deleteResponse = await request(app)
+      .delete(`/categories/${categoryId}`)
+      .set("Authorization", `Bearer ${secondToken}`);
+
+    expect(deleteResponse.status).toBe(404);
+    expect(deleteResponse.body).toEqual({
+      message: "Category not found",
+    });
+
+    const categoryStillExists = await prisma.category.findUnique({
+      where: {
+        id: categoryId,
+      },
+    });
+
+    expect(categoryStillExists).not.toBeNull();
+    expect(categoryStillExists?.name).toBe("Private Food");
   });
 
   it("GET /categories rejects requests without authentication", async () => {
