@@ -176,6 +176,61 @@ describe("Noniq API", () => {
     expect(response.body.user.password).toBeUndefined();
   });
 
+  it("POST /categories creates a category for the authenticated user", async () => {
+    await request(app)
+      .post("/auth/register")
+      .send({
+        name: "Vitest User",
+        email: testEmail,
+        password: "password123",
+        currency: "PYG",
+      });
+
+    const loginResponse = await request(app)
+      .post("/auth/login")
+      .send({
+        email: testEmail,
+        password: "password123",
+      });
+
+    expect(loginResponse.status).toBe(200);
+
+    const token = loginResponse.body.token;
+
+    const createResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Food",
+        type: "EXPENSE",
+      });
+
+    expect(createResponse.status).toBe(201);
+
+    expect(createResponse.body.category).toMatchObject({
+      name: "Food",
+      type: "EXPENSE",
+    });
+
+    expect(createResponse.body.category.id).toBeDefined();
+
+    const listResponse = await request(app)
+      .get("/categories")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(listResponse.status).toBe(200);
+
+    expect(listResponse.body.categories).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: createResponse.body.category.id,
+          name: "Food",
+          type: "EXPENSE",
+        }),
+      ])
+    );
+  });
+
   it("GET /categories rejects requests without authentication", async () => {
     const response = await request(app).get("/categories");
 
