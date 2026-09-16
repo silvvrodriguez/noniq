@@ -25,6 +25,9 @@ const navigation = [
   { href: "/budgets", 
     label: "Budgets" 
   },
+  { href: "/savings-goals", 
+    label: "Savings Goals" 
+  },
 ];
 
 export default function AppHeader() {
