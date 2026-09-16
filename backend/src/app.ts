@@ -1,7 +1,7 @@
+import cors from "cors";
 import express from "express";
 
 import { prisma } from "./lib/prisma.js";
-
 import { errorHandler } from "./middleware/error.middleware.js";
 
 import authRouter from "./routes/auth.routes.js";
@@ -13,6 +13,12 @@ import savingsGoalRouter from "./routes/savings-goal.routes.js";
 import exportRouter from "./routes/export.routes.js";
 
 const app = express();
+
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+  }),
+);
 
 app.use(express.json());
 
