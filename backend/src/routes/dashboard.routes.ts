@@ -194,4 +194,78 @@ router.get(
   },
 );
 
+router.get(
+  "/monthly",
+  authenticateToken,
+  async (req: AuthenticatedRequest, res) => {
+    const now = new Date();
+
+    const startMonth = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5, 1),
+    );
+
+    const endMonth = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 1),
+    );
+
+    const transactions = await prisma.transaction.findMany({
+      where: {
+        userId: req.userId!,
+        date: {
+          gte: startMonth,
+          lt: endMonth,
+        },
+      },
+      select: {
+        amount: true,
+        type: true,
+        date: true,
+      },
+      orderBy: {
+        date: "asc",
+      },
+    });
+
+    const months = Array.from({ length: 6 }, (_, index) => {
+      const date = new Date(
+        Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 5 + index, 1),
+      );
+
+      const month = `${date.getUTCFullYear()}-${String(
+        date.getUTCMonth() + 1,
+      ).padStart(2, "0")}`;
+
+      return {
+        month,
+        income: 0,
+        expenses: 0,
+      };
+    });
+
+    for (const transaction of transactions) {
+      const transactionMonth = `${transaction.date.getUTCFullYear()}-${String(
+        transaction.date.getUTCMonth() + 1,
+      ).padStart(2, "0")}`;
+
+      const month = months.find((item) => item.month === transactionMonth);
+
+      if (!month) {
+        continue;
+      }
+
+      const amount = Number(transaction.amount);
+
+      if (transaction.type === "INCOME") {
+        month.income += amount;
+      } else {
+        month.expenses += amount;
+      }
+    }
+
+    return res.status(200).json({
+      months,
+    });
+  },
+);
+
 export default router;

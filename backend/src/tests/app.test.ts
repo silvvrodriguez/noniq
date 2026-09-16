@@ -1917,6 +1917,118 @@ describe("Noniq API", () => {
     });
   });
 
+  it("GET /dashboard/monthly returns income and expenses for the last six months", async () => {
+    await request(app).post("/auth/register").send({
+      name: "Vitest User",
+      email: testEmail,
+      password: "password123",
+      currency: "PYG",
+    });
+
+    const loginResponse = await request(app).post("/auth/login").send({
+      email: testEmail,
+      password: "password123",
+    });
+
+    const token = loginResponse.body.token;
+
+    const incomeCategoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Salary",
+        type: "INCOME",
+      });
+
+    const expenseCategoryResponse = await request(app)
+      .post("/categories")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        name: "Food",
+        type: "EXPENSE",
+      });
+
+    const incomeCategoryId = incomeCategoryResponse.body.category.id;
+    const expenseCategoryId = expenseCategoryResponse.body.category.id;
+
+    const now = new Date();
+
+    const currentMonthDate = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 15, 12),
+    ).toISOString();
+
+    const previousMonthDate = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 15, 12),
+    ).toISOString();
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 5000000,
+        description: "Current month salary",
+        type: "INCOME",
+        date: currentMonthDate,
+        categoryId: incomeCategoryId,
+      });
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 800000,
+        description: "Current month expenses",
+        type: "EXPENSE",
+        date: currentMonthDate,
+        categoryId: expenseCategoryId,
+      });
+
+    await request(app)
+      .post("/transactions")
+      .set("Authorization", `Bearer ${token}`)
+      .send({
+        amount: 300000,
+        description: "Previous month expenses",
+        type: "EXPENSE",
+        date: previousMonthDate,
+        categoryId: expenseCategoryId,
+      });
+
+    const response = await request(app)
+      .get("/dashboard/monthly")
+      .set("Authorization", `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.months).toHaveLength(6);
+
+    const currentMonth = `${now.getUTCFullYear()}-${String(
+      now.getUTCMonth() + 1,
+    ).padStart(2, "0")}`;
+
+    const previousMonth = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1),
+    );
+
+    const previousMonthKey = `${previousMonth.getUTCFullYear()}-${String(
+      previousMonth.getUTCMonth() + 1,
+    ).padStart(2, "0")}`;
+
+    expect(response.body.months).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          month: currentMonth,
+          income: 5000000,
+          expenses: 800000,
+        }),
+        expect.objectContaining({
+          month: previousMonthKey,
+          income: 0,
+          expenses: 300000,
+        }),
+      ]),
+    );
+  });
+
   it("GET /categories rejects requests without authentication", async () => {
     const response = await request(app).get("/categories");
 
