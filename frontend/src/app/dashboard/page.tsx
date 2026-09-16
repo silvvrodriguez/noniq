@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import AppHeader from "../components/AppHeader";
 import AppShell from "../components/AppShell";
 import ExpensesByCategoryChart from "../components/ExpensesByCategoryChart";
+import IncomeExpensesChart from "../components/IncomeExpensesChart";
 
 type User = {
   id: string;
@@ -46,12 +47,23 @@ type DashboardCategories = {
   categories: CategoryExpense[];
 };
 
+type MonthlyData = {
+  month: string;
+  income: number;
+  expenses: number;
+};
+
+type DashboardMonthly = {
+  months: MonthlyData[];
+};
+
 export default function DashboardPage() {
   const router = useRouter();
 
   const [user, setUser] = useState<User | null>(null);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
   const [categories, setCategories] = useState<CategoryExpense[]>([]);
+  const [months, setMonths] = useState<MonthlyData[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -68,23 +80,31 @@ export default function DashboardPage() {
           Authorization: `Bearer ${token}`,
         };
 
-        const [userResponse, summaryResponse, categoriesResponse] =
-          await Promise.all([
-            fetch("http://localhost:4000/auth/me", {
-              headers,
-            }),
-            fetch("http://localhost:4000/dashboard/summary", {
-              headers,
-            }),
-            fetch("http://localhost:4000/dashboard/categories", {
-              headers,
-            }),
-          ]);
+        const [
+          userResponse,
+          summaryResponse,
+          categoriesResponse,
+          monthlyResponse,
+        ] = await Promise.all([
+          fetch("http://localhost:4000/auth/me", {
+            headers,
+          }),
+          fetch("http://localhost:4000/dashboard/summary", {
+            headers,
+          }),
+          fetch("http://localhost:4000/dashboard/categories", {
+            headers,
+          }),
+          fetch("http://localhost:4000/dashboard/monthly", {
+            headers,
+          }),
+        ]);
 
         if (
           !userResponse.ok ||
           !summaryResponse.ok ||
-          !categoriesResponse.ok
+          !categoriesResponse.ok ||
+          !monthlyResponse.ok
         ) {
           localStorage.removeItem("noniq_token");
           router.replace("/login");
@@ -93,12 +113,16 @@ export default function DashboardPage() {
 
         const userData = await userResponse.json();
         const summaryData = await summaryResponse.json();
+
         const categoriesData: DashboardCategories =
           await categoriesResponse.json();
+
+        const monthlyData: DashboardMonthly = await monthlyResponse.json();
 
         setUser(userData.user);
         setSummary(summaryData);
         setCategories(categoriesData.categories);
+        setMonths(monthlyData.months);
       } catch {
         localStorage.removeItem("noniq_token");
         router.replace("/login");
@@ -182,6 +206,22 @@ export default function DashboardPage() {
             {formatMoney(summary.monthlyExpenses)}
           </p>
         </article>
+      </section>
+
+      <section className="mt-10">
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold tracking-tight">
+            Income vs expenses
+          </h2>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            Compare your financial activity over the last six months.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-surface p-6">
+          <IncomeExpensesChart months={months} currency={user.currency} />
+        </div>
       </section>
 
       <section className="mt-10">
