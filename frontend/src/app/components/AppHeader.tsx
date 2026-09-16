@@ -22,6 +22,9 @@ const navigation = [
     href: "/categories",
     label: "Categories",
   },
+  { href: "/budgets", 
+    label: "Budgets" 
+  },
 ];
 
 export default function AppHeader() {
