@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 import AppHeader from "../components/AppHeader";
+import AppShell from "../components/AppShell";
 
 type User = {
   id: string;
@@ -111,121 +112,117 @@ export default function DashboardPage() {
   }
 
   return (
-    <main className="min-h-screen">
-      <div className="mx-auto max-w-7xl px-6 py-8">
-        <AppHeader user={user} />
+    <AppShell>
+      <AppHeader />
 
-        <section className="mt-16">
-          <p className="text-sm font-medium text-muted-foreground">OVERVIEW</p>
+      <section className="mt-16">
+        <p className="text-sm font-medium text-muted-foreground">OVERVIEW</p>
 
-          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.03em]">
-            Hi, {user.name}.
-          </h1>
+        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.03em]">
+          Hi, {user.name}.
+        </h1>
 
-          <p className="mt-3 text-muted-foreground">
-            Here&apos;s what&apos;s happening with your money.
+        <p className="mt-3 text-muted-foreground">
+          Here&apos;s what&apos;s happening with your money.
+        </p>
+      </section>
+
+      <section className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <article className="rounded-2xl border border-border bg-surface p-6">
+          <p className="text-sm text-muted-foreground">Balance</p>
+
+          <p className="mt-3 text-3xl font-semibold tracking-tight">
+            {formatMoney(summary.balance)}
           </p>
-        </section>
+        </article>
 
-        <section className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <article className="rounded-2xl border border-border bg-surface p-6">
-            <p className="text-sm text-muted-foreground">Balance</p>
+        <article className="rounded-2xl border border-border bg-surface p-6">
+          <p className="text-sm text-muted-foreground">Total income</p>
 
-            <p className="mt-3 text-3xl font-semibold tracking-tight">
-              {formatMoney(summary.balance)}
+          <p className="mt-3 text-3xl font-semibold tracking-tight">
+            {formatMoney(summary.totalIncome)}
+          </p>
+        </article>
+
+        <article className="rounded-2xl border border-border bg-surface p-6">
+          <p className="text-sm text-muted-foreground">Income this month</p>
+
+          <p className="mt-3 text-3xl font-semibold tracking-tight text-success">
+            {formatMoney(summary.monthlyIncome)}
+          </p>
+        </article>
+
+        <article className="rounded-2xl border border-border bg-surface p-6">
+          <p className="text-sm text-muted-foreground">Expenses this month</p>
+
+          <p className="mt-3 text-3xl font-semibold tracking-tight text-danger">
+            {formatMoney(summary.monthlyExpenses)}
+          </p>
+        </article>
+      </section>
+
+      <section className="mt-10">
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight">
+              Recent transactions
+            </h2>
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              Your latest financial activity.
             </p>
-          </article>
+          </div>
 
-          <article className="rounded-2xl border border-border bg-surface p-6">
-            <p className="text-sm text-muted-foreground">Total income</p>
+          <Link
+            href="/transactions"
+            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            View all
+          </Link>
+        </div>
 
-            <p className="mt-3 text-3xl font-semibold tracking-tight">
-              {formatMoney(summary.totalIncome)}
-            </p>
-          </article>
+        <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+          {summary.recentTransactions.length === 0 ? (
+            <div className="px-6 py-12 text-center">
+              <p className="font-medium">No transactions yet</p>
 
-          <article className="rounded-2xl border border-border bg-surface p-6">
-            <p className="text-sm text-muted-foreground">Income this month</p>
-
-            <p className="mt-3 text-3xl font-semibold tracking-tight text-success">
-              {formatMoney(summary.monthlyIncome)}
-            </p>
-          </article>
-
-          <article className="rounded-2xl border border-border bg-surface p-6">
-            <p className="text-sm text-muted-foreground">
-              Expenses this month
-            </p>
-
-            <p className="mt-3 text-3xl font-semibold tracking-tight text-danger">
-              {formatMoney(summary.monthlyExpenses)}
-            </p>
-          </article>
-        </section>
-
-        <section className="mt-10">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold tracking-tight">
-                Recent transactions
-              </h2>
-
-              <p className="mt-1 text-sm text-muted-foreground">
-                Your latest financial activity.
+              <p className="mt-2 text-sm text-muted-foreground">
+                Your latest transactions will appear here.
               </p>
             </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {summary.recentTransactions.map((transaction) => (
+                <div
+                  key={transaction.id}
+                  className="flex items-center justify-between px-6 py-5"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {transaction.description || transaction.category.name}
+                    </p>
 
-            <Link
-              href="/transactions"
-              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-            >
-              View all
-            </Link>
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-border bg-surface">
-            {summary.recentTransactions.length === 0 ? (
-              <div className="px-6 py-12 text-center">
-                <p className="font-medium">No transactions yet</p>
-
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Your latest transactions will appear here.
-                </p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {summary.recentTransactions.map((transaction) => (
-                  <div
-                    key={transaction.id}
-                    className="flex items-center justify-between px-6 py-5"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {transaction.description || transaction.category.name}
-                      </p>
-
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {transaction.category.name}
-                      </p>
-                    </div>
-
-                    <p
-                      className={`font-semibold ${
-                        transaction.type === "INCOME"
-                          ? "text-success"
-                          : "text-danger"
-                      }`}
-                    >
-                      {transaction.type === "INCOME" ? "+" : "-"}
-                      {formatMoney(Number(transaction.amount))}
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {transaction.category.name}
                     </p>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
-    </main>
+
+                  <p
+                    className={`font-semibold ${
+                      transaction.type === "INCOME"
+                        ? "text-success"
+                        : "text-danger"
+                    }`}
+                  >
+                    {transaction.type === "INCOME" ? "+" : "-"}
+                    {formatMoney(Number(transaction.amount))}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    </AppShell>
   );
 }

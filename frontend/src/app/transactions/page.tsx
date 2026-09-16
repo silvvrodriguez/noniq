@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
 import AppHeader from "../components/AppHeader";
+import AppShell from "../components/AppShell";
 
 type TransactionType = "INCOME" | "EXPENSE";
 
@@ -170,202 +171,200 @@ export default function TransactionsPage() {
   }
 
   return (
-    <main className="min-h-screen">
-      <div className="mx-auto max-w-7xl px-6 py-8">
-        <AppHeader />
+    <AppShell>
+      <AppHeader />
 
-        <section className="mt-16">
-          <p className="text-sm font-medium text-muted-foreground">
-            YOUR ACTIVITY
-          </p>
+      <section className="mt-16">
+        <p className="text-sm font-medium text-muted-foreground">
+          YOUR ACTIVITY
+        </p>
 
-          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.03em]">
-            Transactions
-          </h1>
+        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.03em]">
+          Transactions
+        </h1>
 
-          <p className="mt-3 text-muted-foreground">
-            Track the money coming in and going out.
-          </p>
-        </section>
+        <p className="mt-3 text-muted-foreground">
+          Track the money coming in and going out.
+        </p>
+      </section>
 
-        <section className="mt-10 grid gap-8 lg:grid-cols-[380px_1fr]">
-          <div className="rounded-2xl border border-border bg-surface p-6">
-            <h2 className="text-lg font-semibold">New transaction</h2>
+      <section className="mt-10 grid gap-8 lg:grid-cols-[380px_1fr]">
+        <div className="rounded-2xl border border-border bg-surface p-6">
+          <h2 className="text-lg font-semibold">New transaction</h2>
 
-            <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-              <div>
-                <label
-                  htmlFor="type"
-                  className="mb-2 block text-sm font-medium"
-                >
-                  Type
-                </label>
-
-                <select
-                  id="type"
-                  value={type}
-                  onChange={(event) => {
-                    const newType = event.target.value as TransactionType;
-
-                    setType(newType);
-
-                    const firstCategory = categories.find(
-                      (category) => category.type === newType,
-                    );
-
-                    setCategoryId(firstCategory?.id ?? "");
-                  }}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
-                >
-                  <option value="EXPENSE">Expense</option>
-                  <option value="INCOME">Income</option>
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="amount"
-                  className="mb-2 block text-sm font-medium"
-                >
-                  Amount
-                </label>
-
-                <input
-                  id="amount"
-                  type="number"
-                  min="1"
-                  step="1"
-                  placeholder="e.g. 150000"
-                  value={amount}
-                  onChange={(event) => setAmount(event.target.value)}
-                  required
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="category"
-                  className="mb-2 block text-sm font-medium"
-                >
-                  Category
-                </label>
-
-                <select
-                  id="category"
-                  value={categoryId}
-                  onChange={(event) => setCategoryId(event.target.value)}
-                  required
-                  disabled={filteredCategories.length === 0}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none disabled:opacity-50"
-                >
-                  {filteredCategories.length === 0 ? (
-                    <option value="">No categories available</option>
-                  ) : (
-                    filteredCategories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))
-                  )}
-                </select>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="description"
-                  className="mb-2 block text-sm font-medium"
-                >
-                  Description
-                </label>
-
-                <input
-                  id="description"
-                  type="text"
-                  maxLength={200}
-                  placeholder="e.g. Groceries"
-                  value={description}
-                  onChange={(event) => setDescription(event.target.value)}
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="date"
-                  className="mb-2 block text-sm font-medium"
-                >
-                  Date
-                </label>
-
-                <input
-                  id="date"
-                  type="date"
-                  value={date}
-                  onChange={(event) => setDate(event.target.value)}
-                  required
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
-                />
-              </div>
-
-              {error && (
-                <p className="text-sm text-danger" role="alert">
-                  {error}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground"
+          <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+            <div>
+              <label
+                htmlFor="type"
+                className="mb-2 block text-sm font-medium"
               >
-                Add transaction
-              </button>
-            </form>
-          </div>
+                Type
+              </label>
 
-          <div className="overflow-hidden rounded-2xl border border-border bg-surface">
-            {transactions.length === 0 ? (
-              <div className="px-6 py-12 text-center">
-                <p className="font-medium">No transactions yet</p>
+              <select
+                id="type"
+                value={type}
+                onChange={(event) => {
+                  const newType = event.target.value as TransactionType;
 
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Add your first transaction to start tracking your money.
-                </p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {transactions.map((transaction) => (
-                  <div
-                    key={transaction.id}
-                    className="flex items-center justify-between px-6 py-5"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {transaction.description || transaction.category.name}
-                      </p>
+                  setType(newType);
 
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {transaction.category.name}
-                      </p>
-                    </div>
+                  const firstCategory = categories.find(
+                    (category) => category.type === newType,
+                  );
 
-                    <p
-                      className={`font-semibold ${
-                        transaction.type === "INCOME"
-                          ? "text-success"
-                          : "text-danger"
-                      }`}
-                    >
-                      {transaction.type === "INCOME" ? "+" : "-"}
-                      {Number(transaction.amount).toLocaleString()}
+                  setCategoryId(firstCategory?.id ?? "");
+                }}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
+              >
+                <option value="EXPENSE">Expense</option>
+                <option value="INCOME">Income</option>
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="amount"
+                className="mb-2 block text-sm font-medium"
+              >
+                Amount
+              </label>
+
+              <input
+                id="amount"
+                type="number"
+                min="1"
+                step="1"
+                placeholder="e.g. 150000"
+                value={amount}
+                onChange={(event) => setAmount(event.target.value)}
+                required
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="category"
+                className="mb-2 block text-sm font-medium"
+              >
+                Category
+              </label>
+
+              <select
+                id="category"
+                value={categoryId}
+                onChange={(event) => setCategoryId(event.target.value)}
+                required
+                disabled={filteredCategories.length === 0}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none disabled:opacity-50"
+              >
+                {filteredCategories.length === 0 ? (
+                  <option value="">No categories available</option>
+                ) : (
+                  filteredCategories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))
+                )}
+              </select>
+            </div>
+
+            <div>
+              <label
+                htmlFor="description"
+                className="mb-2 block text-sm font-medium"
+              >
+                Description
+              </label>
+
+              <input
+                id="description"
+                type="text"
+                maxLength={200}
+                placeholder="e.g. Groceries"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="date"
+                className="mb-2 block text-sm font-medium"
+              >
+                Date
+              </label>
+
+              <input
+                id="date"
+                type="date"
+                value={date}
+                onChange={(event) => setDate(event.target.value)}
+                required
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
+              />
+            </div>
+
+            {error && (
+              <p className="text-sm text-danger" role="alert">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground"
+            >
+              Add transaction
+            </button>
+          </form>
+        </div>
+
+        <div className="overflow-hidden rounded-2xl border border-border bg-surface">
+          {transactions.length === 0 ? (
+            <div className="px-6 py-12 text-center">
+              <p className="font-medium">No transactions yet</p>
+
+              <p className="mt-2 text-sm text-muted-foreground">
+                Add your first transaction to start tracking your money.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {transactions.map((transaction) => (
+                <div
+                  key={transaction.id}
+                  className="flex items-center justify-between px-6 py-5"
+                >
+                  <div>
+                    <p className="font-medium">
+                      {transaction.description || transaction.category.name}
+                    </p>
+
+                    <p className="mt-1 text-sm text-muted-foreground">
+                      {transaction.category.name}
                     </p>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
-    </main>
+
+                  <p
+                    className={`font-semibold ${
+                      transaction.type === "INCOME"
+                        ? "text-success"
+                        : "text-danger"
+                    }`}
+                  >
+                    {transaction.type === "INCOME" ? "+" : "-"}
+                    {Number(transaction.amount).toLocaleString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    </AppShell>
   );
 }

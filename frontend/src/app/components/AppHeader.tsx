@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
-type AppHeaderProps = {
-  user?: {
-    name: string;
-    email: string;
-  };
+type User = {
+  name: string;
+  email: string;
 };
 
 const navigation = [
@@ -25,8 +24,48 @@ const navigation = [
   },
 ];
 
-export default function AppHeader({ user }: AppHeaderProps) {
+export default function AppHeader() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    async function loadUser() {
+      const token = localStorage.getItem("noniq_token");
+
+      if (!token) {
+        router.replace("/login");
+        return;
+      }
+
+      try {
+        const response = await fetch("http://localhost:4000/auth/me", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.status === 401) {
+          localStorage.removeItem("noniq_token");
+          router.replace("/login");
+          return;
+        }
+
+        if (!response.ok) {
+          return;
+        }
+
+        const data = await response.json();
+
+        setUser(data.user);
+      } catch {
+        return;
+      }
+    }
+
+    loadUser();
+  }, [router]);
 
   return (
     <header>

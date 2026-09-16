@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
 import AppHeader from "../components/AppHeader";
+import AppShell from "../components/AppShell";
 
 type CategoryType = "INCOME" | "EXPENSE";
 
@@ -113,126 +114,122 @@ export default function CategoriesPage() {
   if (loading) {
     return (
       <main className="flex min-h-screen items-center justify-center">
-        <p className="text-sm text-muted-foreground">
-          Loading categories...
-        </p>
+        <p className="text-sm text-muted-foreground">Loading categories...</p>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen">
-      <div className="mx-auto max-w-7xl px-6 py-8">
-        <AppHeader />
+    <AppShell>
+      <AppHeader />
 
-        <section className="mt-16">
-          <p className="text-sm font-medium text-muted-foreground">
-            ORGANIZE YOUR MONEY
-          </p>
+      <section className="mt-16">
+        <p className="text-sm font-medium text-muted-foreground">
+          ORGANIZE YOUR MONEY
+        </p>
 
-          <h1 className="mt-3 text-4xl font-semibold tracking-[-0.03em]">
-            Categories
-          </h1>
+        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.03em]">
+          Categories
+        </h1>
 
-          <p className="mt-3 text-muted-foreground">
-            Create categories for your income and expenses.
-          </p>
-        </section>
+        <p className="mt-3 text-muted-foreground">
+          Create categories for your income and expenses.
+        </p>
+      </section>
 
-        <section className="mt-10 grid gap-8 md:grid-cols-[360px_1fr]">
-          <div className="rounded-2xl border border-border bg-surface p-6">
-            <h2 className="text-lg font-semibold">New category</h2>
+      <section className="mt-10 grid gap-8 md:grid-cols-[360px_1fr]">
+        <div className="rounded-2xl border border-border bg-surface p-6">
+          <h2 className="text-lg font-semibold">New category</h2>
 
-            <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-              <div>
-                <label
-                  htmlFor="name"
-                  className="mb-2 block text-sm font-medium"
-                >
-                  Name
-                </label>
-
-                <input
-                  id="name"
-                  type="text"
-                  placeholder="e.g. Food"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  required
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
-                />
-              </div>
-
-              <div>
-                <label
-                  htmlFor="type"
-                  className="mb-2 block text-sm font-medium"
-                >
-                  Type
-                </label>
-
-                <select
-                  id="type"
-                  value={type}
-                  onChange={(event) =>
-                    setType(event.target.value as CategoryType)
-                  }
-                  className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
-                >
-                  <option value="EXPENSE">Expense</option>
-                  <option value="INCOME">Income</option>
-                </select>
-              </div>
-
-              {error && (
-                <p className="text-sm text-danger" role="alert">
-                  {error}
-                </p>
-              )}
-
-              <button
-                type="submit"
-                className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground"
+          <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+            <div>
+              <label
+                htmlFor="name"
+                className="mb-2 block text-sm font-medium"
               >
-                Add category
-              </button>
-            </form>
-          </div>
+                Name
+              </label>
 
-          <div className="rounded-2xl border border-border bg-surface">
-            {categories.length === 0 ? (
-              <div className="px-6 py-12 text-center">
-                <p className="font-medium">No categories yet</p>
+              <input
+                id="name"
+                type="text"
+                placeholder="e.g. Food"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                required
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
+              />
+            </div>
 
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Create your first category to start tracking your money.
-                </p>
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {categories.map((category) => (
-                  <div
-                    key={category.id}
-                    className="flex items-center justify-between px-6 py-5"
-                  >
-                    <p className="font-medium">{category.name}</p>
+            <div>
+              <label
+                htmlFor="type"
+                className="mb-2 block text-sm font-medium"
+              >
+                Type
+              </label>
 
-                    <span
-                      className={`text-sm font-medium ${
-                        category.type === "INCOME"
-                          ? "text-success"
-                          : "text-danger"
-                      }`}
-                    >
-                      {category.type === "INCOME" ? "Income" : "Expense"}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <select
+                id="type"
+                value={type}
+                onChange={(event) =>
+                  setType(event.target.value as CategoryType)
+                }
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
+              >
+                <option value="EXPENSE">Expense</option>
+                <option value="INCOME">Income</option>
+              </select>
+            </div>
+
+            {error && (
+              <p className="text-sm text-danger" role="alert">
+                {error}
+              </p>
             )}
-          </div>
-        </section>
-      </div>
-    </main>
+
+            <button
+              type="submit"
+              className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground"
+            >
+              Add category
+            </button>
+          </form>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-surface">
+          {categories.length === 0 ? (
+            <div className="px-6 py-12 text-center">
+              <p className="font-medium">No categories yet</p>
+
+              <p className="mt-2 text-sm text-muted-foreground">
+                Create your first category to start tracking your money.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-border">
+              {categories.map((category) => (
+                <div
+                  key={category.id}
+                  className="flex items-center justify-between px-6 py-5"
+                >
+                  <p className="font-medium">{category.name}</p>
+
+                  <span
+                    className={`text-sm font-medium ${
+                      category.type === "INCOME"
+                        ? "text-success"
+                        : "text-danger"
+                    }`}
+                  >
+                    {category.type === "INCOME" ? "Income" : "Expense"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+    </AppShell>
   );
 }
