@@ -2355,10 +2355,10 @@ describe("Noniq API", () => {
       'attachment; filename="noniq-transactions.csv"',
     );
 
-    expect(response.text).toContain("date,type,category,description,amount");
+    expect(response.text).toContain("date;type;category;description;amount");
 
     expect(response.text).toContain(
-      "2026-09-15T12:00:00.000Z,EXPENSE,Food,Weekly groceries,250000",
+      "2026-09-15T12:00:00.000Z;EXPENSE;Food;Weekly groceries;250000",
     );
   });
 
@@ -2442,7 +2442,7 @@ describe("Noniq API", () => {
     expect(response.text).not.toContain("Second user private transaction");
   });
 
-  it("GET /export/transactions.csv escapes commas and quotes correctly", async () => {
+  it("GET /export/transactions.csv escapes separator and quotes correctly", async () => {
     await request(app).post("/auth/register").send({
       name: "Export User",
       email: testEmail,
@@ -2461,7 +2461,7 @@ describe("Noniq API", () => {
       .post("/categories")
       .set("Authorization", `Bearer ${token}`)
       .send({
-        name: "Food, Drinks",
+        name: "Food; Drinks",
         type: "EXPENSE",
       });
 
@@ -2472,7 +2472,7 @@ describe("Noniq API", () => {
       .set("Authorization", `Bearer ${token}`)
       .send({
         amount: 125000,
-        description: 'Lunch, "special"',
+        description: 'Lunch; "special"',
         type: "EXPENSE",
         date: "2026-09-15T14:00:00.000Z",
         categoryId,
@@ -2484,9 +2484,9 @@ describe("Noniq API", () => {
 
     expect(response.status).toBe(200);
 
-    expect(response.text).toContain('"Food, Drinks"');
+    expect(response.text).toContain('"Food; Drinks"');
 
-    expect(response.text).toContain('"Lunch, ""special"""');
+    expect(response.text).toContain('"Lunch; ""special"""');
   });
 
   it("GET /export/transactions.csv returns only the header when the user has no transactions", async () => {
@@ -2509,9 +2509,9 @@ describe("Noniq API", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(200);
-    expect(response.text).toBe("date,type,category,description,amount");
-  });
 
+    expect(response.text).toBe("\uFEFFdate;type;category;description;amount");
+  });
   it("DELETE /categories/:id returns 409 when the category is used by a transaction", async () => {
     await request(app).post("/auth/register").send({
       name: "Vitest User",
@@ -2555,6 +2555,7 @@ describe("Noniq API", () => {
       .set("Authorization", `Bearer ${token}`);
 
     expect(response.status).toBe(409);
+
     expect(response.body).toEqual({
       message:
         "Category cannot be deleted because it is being used by transactions or budgets",
@@ -2573,6 +2574,7 @@ describe("Noniq API", () => {
     const response = await request(app).get("/this-route-does-not-exist");
 
     expect(response.status).toBe(404);
+
     expect(response.body).toEqual({
       message: "Route not found",
     });

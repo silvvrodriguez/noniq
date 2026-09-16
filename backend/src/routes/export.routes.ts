@@ -8,11 +8,13 @@ import {
 
 const router = Router();
 
+const CSV_SEPARATOR = ";";
+
 function escapeCsvValue(value: string | number | null | undefined) {
   const text = value === null || value === undefined ? "" : String(value);
 
   if (
-    text.includes(",") ||
+    text.includes(CSV_SEPARATOR) ||
     text.includes('"') ||
     text.includes("\n") ||
     text.includes("\r")
@@ -49,10 +51,14 @@ router.get(
       transaction.amount.toString(),
     ]);
 
-    const csv = [
-      header.map(escapeCsvValue).join(","),
-      ...rows.map((row) => row.map(escapeCsvValue).join(",")),
+    const csvContent = [
+      header.map(escapeCsvValue).join(CSV_SEPARATOR),
+      ...rows.map((row) => row.map(escapeCsvValue).join(CSV_SEPARATOR)),
     ].join("\r\n");
+
+    // UTF-8 BOM improves compatibility with Microsoft Excel,
+    // especially for accented characters.
+    const csv = `\uFEFF${csvContent}`;
 
     res.setHeader("Content-Type", "text/csv; charset=utf-8");
 

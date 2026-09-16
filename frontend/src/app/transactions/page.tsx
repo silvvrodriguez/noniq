@@ -50,6 +50,7 @@ export default function TransactionsPage() {
   const [loading, setLoading] = useState(true);
   const [filtering, setFiltering] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [error, setError] = useState("");
 
   const filteredCategories = categories.filter(
@@ -340,6 +341,60 @@ export default function TransactionsPage() {
     }
   }
 
+  async function handleExportCsv() {
+    const token = localStorage.getItem("noniq_token");
+
+    if (!token) {
+      router.replace("/login");
+      return;
+    }
+
+    setError("");
+    setExporting(true);
+
+    try {
+      const response = await fetch(
+        "http://localhost:4000/export/transactions.csv",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (response.status === 401) {
+        localStorage.removeItem("noniq_token");
+        router.replace("/login");
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error("Unable to export your transactions.");
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "noniq-transactions.csv";
+
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to export your transactions.",
+      );
+    } finally {
+      setExporting(false);
+    }
+  }
+
   function formatDate(value: string) {
     return new Intl.DateTimeFormat("en-US", {
       month: "short",
@@ -364,17 +419,30 @@ export default function TransactionsPage() {
       <AppHeader />
 
       <section className="mt-16">
-        <p className="text-sm font-medium text-muted-foreground">
-          YOUR ACTIVITY
-        </p>
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <p className="text-sm font-medium text-muted-foreground">
+              YOUR ACTIVITY
+            </p>
 
-        <h1 className="mt-3 text-4xl font-semibold tracking-[-0.03em]">
-          Transactions
-        </h1>
+            <h1 className="mt-3 text-4xl font-semibold tracking-[-0.03em]">
+              Transactions
+            </h1>
 
-        <p className="mt-3 text-muted-foreground">
-          Track the money coming in and going out.
-        </p>
+            <p className="mt-3 text-muted-foreground">
+              Track the money coming in and going out.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={exporting}
+            className="w-fit rounded-xl border border-border bg-surface px-5 py-3 text-sm font-medium transition-colors hover:bg-background disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {exporting ? "Exporting..." : "Export CSV"}
+          </button>
+        </div>
       </section>
 
       <section className="mt-10 grid gap-8 lg:grid-cols-[380px_1fr]">
