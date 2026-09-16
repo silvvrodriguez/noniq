@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 
 import AppHeader from "../components/AppHeader";
 import AppShell from "../components/AppShell";
+import ExpensesByCategoryChart from "../components/ExpensesByCategoryChart";
 
 type User = {
   id: string;
@@ -35,11 +36,22 @@ type DashboardSummary = {
   recentTransactions: Transaction[];
 };
 
+type CategoryExpense = {
+  categoryId: string;
+  categoryName: string;
+  total: number;
+};
+
+type DashboardCategories = {
+  categories: CategoryExpense[];
+};
+
 export default function DashboardPage() {
   const router = useRouter();
 
   const [user, setUser] = useState<User | null>(null);
   const [summary, setSummary] = useState<DashboardSummary | null>(null);
+  const [categories, setCategories] = useState<CategoryExpense[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -56,16 +68,24 @@ export default function DashboardPage() {
           Authorization: `Bearer ${token}`,
         };
 
-        const [userResponse, summaryResponse] = await Promise.all([
-          fetch("http://localhost:4000/auth/me", {
-            headers,
-          }),
-          fetch("http://localhost:4000/dashboard/summary", {
-            headers,
-          }),
-        ]);
+        const [userResponse, summaryResponse, categoriesResponse] =
+          await Promise.all([
+            fetch("http://localhost:4000/auth/me", {
+              headers,
+            }),
+            fetch("http://localhost:4000/dashboard/summary", {
+              headers,
+            }),
+            fetch("http://localhost:4000/dashboard/categories", {
+              headers,
+            }),
+          ]);
 
-        if (!userResponse.ok || !summaryResponse.ok) {
+        if (
+          !userResponse.ok ||
+          !summaryResponse.ok ||
+          !categoriesResponse.ok
+        ) {
           localStorage.removeItem("noniq_token");
           router.replace("/login");
           return;
@@ -73,9 +93,12 @@ export default function DashboardPage() {
 
         const userData = await userResponse.json();
         const summaryData = await summaryResponse.json();
+        const categoriesData: DashboardCategories =
+          await categoriesResponse.json();
 
         setUser(userData.user);
         setSummary(summaryData);
+        setCategories(categoriesData.categories);
       } catch {
         localStorage.removeItem("noniq_token");
         router.replace("/login");
@@ -159,6 +182,25 @@ export default function DashboardPage() {
             {formatMoney(summary.monthlyExpenses)}
           </p>
         </article>
+      </section>
+
+      <section className="mt-10">
+        <div className="mb-4">
+          <h2 className="text-xl font-semibold tracking-tight">
+            Expenses by category
+          </h2>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            See where your money is going.
+          </p>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-surface p-6">
+          <ExpensesByCategoryChart
+            categories={categories}
+            currency={user.currency}
+          />
+        </div>
       </section>
 
       <section className="mt-10">
