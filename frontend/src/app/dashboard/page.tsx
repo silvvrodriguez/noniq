@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/lib/api";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -86,16 +87,16 @@ export default function DashboardPage() {
           categoriesResponse,
           monthlyResponse,
         ] = await Promise.all([
-          fetch("http://localhost:4000/auth/me", {
+          fetch(`${API_URL}/auth/me`, {
             headers,
           }),
-          fetch("http://localhost:4000/dashboard/summary", {
+          fetch(`${API_URL}/dashboard/summary`, {
             headers,
           }),
-          fetch("http://localhost:4000/dashboard/categories", {
+          fetch(`${API_URL}/dashboard/categories`, {
             headers,
           }),
-          fetch("http://localhost:4000/dashboard/monthly", {
+          fetch(`${API_URL}/dashboard/monthly`, {
             headers,
           }),
         ]);

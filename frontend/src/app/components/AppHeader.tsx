@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/lib/api";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -48,7 +49,7 @@ export default function AppHeader() {
       }
 
       try {
-        const response = await fetch("http://localhost:4000/auth/me", {
+        const response = await fetch(`${API_URL}/auth/me`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },

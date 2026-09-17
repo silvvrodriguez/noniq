@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import {
   FormEvent,
@@ -52,14 +53,11 @@ export default function SavingsGoalsPage() {
 
   const fetchGoals = useCallback(
     async (token: string) => {
-      const response = await fetch(
-        "http://localhost:4000/savings-goals",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch(`${API_URL}/savings-goals`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       if (response.status === 401) {
         localStorage.removeItem("noniq_token");
@@ -154,17 +152,14 @@ export default function SavingsGoalsPage() {
         body.targetDate = targetDate;
       }
 
-      const response = await fetch(
-        "http://localhost:4000/savings-goals",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(body),
+      const response = await fetch(`${API_URL}/savings-goals`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify(body),
+      });
 
       const data = await response.json();
 
@@ -250,22 +245,19 @@ export default function SavingsGoalsPage() {
     setSavingGoalId(goalId);
 
     try {
-      const response = await fetch(
-        `http://localhost:4000/savings-goals/${goalId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            name: editingName.trim(),
-            targetAmount: parsedTargetAmount,
-            currentAmount: parsedCurrentAmount,
-            targetDate: editingTargetDate || null,
-          }),
+      const response = await fetch(`${API_URL}/savings-goals/${goalId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify({
+          name: editingName.trim(),
+          targetAmount: parsedTargetAmount,
+          currentAmount: parsedCurrentAmount,
+          targetDate: editingTargetDate || null,
+        }),
+      });
 
       const data = await response.json();
 
@@ -329,15 +321,12 @@ export default function SavingsGoalsPage() {
     setDeletingGoalId(goalId);
 
     try {
-      const response = await fetch(
-        `http://localhost:4000/savings-goals/${goalId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch(`${API_URL}/savings-goals/${goalId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       const data = await response.json();
 
@@ -490,9 +479,7 @@ export default function SavingsGoalsPage() {
                 className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
               />
 
-              <p className="mt-2 text-xs text-muted-foreground">
-                Optional.
-              </p>
+              <p className="mt-2 text-xs text-muted-foreground">Optional.</p>
             </div>
 
             {error && (

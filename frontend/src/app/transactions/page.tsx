@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import {
   FormEvent,
@@ -92,8 +93,8 @@ export default function TransactionsPage() {
       const query = params.toString();
 
       const url = query
-        ? `http://localhost:4000/transactions?${query}`
-        : "http://localhost:4000/transactions";
+        ? `${API_URL}/transactions?${query}`
+        : `${API_URL}/transactions`;
 
       const response = await fetch(url, {
         headers: {
@@ -141,7 +142,7 @@ export default function TransactionsPage() {
         };
 
         const [categoriesResponse, transactionList] = await Promise.all([
-          fetch("http://localhost:4000/categories", { headers }),
+          fetch(`${API_URL}/categories`, { headers }),
           fetchTransactions(token),
         ]);
 
@@ -209,23 +210,20 @@ export default function TransactionsPage() {
     setSubmitting(true);
 
     try {
-      const response = await fetch(
-        "http://localhost:4000/transactions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            amount: Number(amount),
-            description: description.trim() || undefined,
-            type,
-            date: new Date(`${date}T12:00:00.000Z`).toISOString(),
-            categoryId,
-          }),
+      const response = await fetch(`${API_URL}/transactions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify({
+          amount: Number(amount),
+          description: description.trim() || undefined,
+          type,
+          date: new Date(`${date}T12:00:00.000Z`).toISOString(),
+          categoryId,
+        }),
+      });
 
       const data = await response.json();
 
@@ -354,7 +352,7 @@ export default function TransactionsPage() {
 
     try {
       const response = await fetch(
-        "http://localhost:4000/export/transactions.csv",
+        `${API_URL}/export/transactions.csv`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

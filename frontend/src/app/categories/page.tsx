@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 
@@ -33,7 +34,7 @@ export default function CategoriesPage() {
       }
 
       try {
-        const response = await fetch("http://localhost:4000/categories", {
+        const response = await fetch(`${API_URL}/categories`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -82,7 +83,7 @@ export default function CategoriesPage() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:4000/categories", {
+      const response = await fetch(`${API_URL}/categories`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

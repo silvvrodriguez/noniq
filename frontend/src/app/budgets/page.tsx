@@ -1,5 +1,6 @@
 "use client";
 
+import { API_URL } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import {
   FormEvent,
@@ -56,7 +57,7 @@ export default function BudgetsPage() {
 
   const fetchBudgets = useCallback(
     async (token: string) => {
-      const response = await fetch("http://localhost:4000/budgets", {
+      const response = await fetch(`${API_URL}/budgets`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -95,14 +96,11 @@ export default function BudgetsPage() {
       }
 
       try {
-        const categoriesResponse = await fetch(
-          "http://localhost:4000/categories",
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
+        const categoriesResponse = await fetch(`${API_URL}/categories`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
           },
-        );
+        });
 
         if (categoriesResponse.status === 401) {
           localStorage.removeItem("noniq_token");
@@ -165,7 +163,7 @@ export default function BudgetsPage() {
     setSubmitting(true);
 
     try {
-      const response = await fetch("http://localhost:4000/budgets", {
+      const response = await fetch(`${API_URL}/budgets`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -239,19 +237,16 @@ export default function BudgetsPage() {
     setSavingBudgetId(budgetId);
 
     try {
-      const response = await fetch(
-        `http://localhost:4000/budgets/${budgetId}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            amount: newAmount,
-          }),
+      const response = await fetch(`${API_URL}/budgets/${budgetId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify({
+          amount: newAmount,
+        }),
+      });
 
       const data = await response.json();
 
@@ -306,15 +301,12 @@ export default function BudgetsPage() {
     setDeletingBudgetId(budgetId);
 
     try {
-      const response = await fetch(
-        `http://localhost:4000/budgets/${budgetId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch(`${API_URL}/budgets/${budgetId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       const data = await response.json();
 
