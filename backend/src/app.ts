@@ -1,6 +1,7 @@
 import cors from "cors";
 import express from "express";
 
+import { env } from "./config.js";
 import { prisma } from "./lib/prisma.js";
 import { errorHandler } from "./middleware/error.middleware.js";
 
@@ -16,7 +17,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: env.FRONTEND_URL,
   }),
 );
 
