@@ -22,11 +22,13 @@ const navigation = [
     href: "/categories",
     label: "Categories",
   },
-  { href: "/budgets", 
-    label: "Budgets" 
+  {
+    href: "/budgets",
+    label: "Budgets",
   },
-  { href: "/savings-goals", 
-    label: "Savings Goals" 
+  {
+    href: "/savings-goals",
+    label: "Savings Goals",
   },
 ];
 
@@ -73,6 +75,11 @@ export default function AppHeader() {
     loadUser();
   }, [router]);
 
+  function handleLogout() {
+    localStorage.removeItem("noniq_token");
+    router.replace("/login");
+  }
+
   return (
     <header>
       <div className="flex items-center justify-between">
@@ -84,9 +91,19 @@ export default function AppHeader() {
         </Link>
 
         {user && (
-          <div className="text-right">
-            <p className="text-sm font-medium">{user.name}</p>
-            <p className="text-sm text-muted-foreground">{user.email}</p>
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <p className="text-sm font-medium">{user.name}</p>
+              <p className="text-sm text-muted-foreground">{user.email}</p>
+            </div>
+
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-muted-foreground transition-all duration-150 hover:border-foreground hover:bg-muted hover:text-foreground active:scale-95"
+            >
+              Log out
+            </button>
           </div>
         )}
       </div>
