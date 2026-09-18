@@ -9,9 +9,9 @@ export default function Home() {
 
           <Link
             href="/login"
-            className="rounded-full border border-border bg-surface px-5 py-2.5 text-sm font-medium"
+            className="rounded-full border border-border bg-surface px-5 py-2.5 text-sm font-medium transition-all duration-150 hover:border-foreground hover:bg-muted active:scale-95"
           >
-          Sign in
+            Sign in
           </Link>
         </header>
 
@@ -32,9 +32,12 @@ export default function Home() {
               progress toward the things that matter to you.
             </p>
 
-            <button className="mt-9 rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground">
+            <Link
+              href="/register"
+              className="mt-9 inline-block rounded-full bg-primary px-6 py-3.5 text-sm font-medium text-primary-foreground transition-all duration-150 hover:opacity-90 active:scale-95"
+            >
               Get started
-            </button>
+            </Link>
           </div>
         </section>
 

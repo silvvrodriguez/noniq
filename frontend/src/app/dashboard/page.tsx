@@ -175,35 +175,35 @@ export default function DashboardPage() {
         </p>
       </section>
 
-      <section className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <article className="rounded-2xl border border-border bg-surface p-6">
+      <section className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <article className="min-w-0 rounded-2xl border border-border bg-surface p-6">
           <p className="text-sm text-muted-foreground">Balance</p>
 
-          <p className="mt-3 text-3xl font-semibold tracking-tight">
+          <p className="mt-3 break-words text-3xl font-semibold tracking-tight">
             {formatMoney(summary.balance)}
           </p>
         </article>
 
-        <article className="rounded-2xl border border-border bg-surface p-6">
+        <article className="min-w-0 rounded-2xl border border-border bg-surface p-6">
           <p className="text-sm text-muted-foreground">Total income</p>
 
-          <p className="mt-3 text-3xl font-semibold tracking-tight">
+          <p className="mt-3 break-words text-3xl font-semibold tracking-tight">
             {formatMoney(summary.totalIncome)}
           </p>
         </article>
 
-        <article className="rounded-2xl border border-border bg-surface p-6">
+        <article className="min-w-0 rounded-2xl border border-border bg-surface p-6">
           <p className="text-sm text-muted-foreground">Income this month</p>
 
-          <p className="mt-3 text-3xl font-semibold tracking-tight text-success">
+          <p className="mt-3 break-words text-3xl font-semibold tracking-tight text-success">
             {formatMoney(summary.monthlyIncome)}
           </p>
         </article>
 
-        <article className="rounded-2xl border border-border bg-surface p-6">
+        <article className="min-w-0 rounded-2xl border border-border bg-surface p-6">
           <p className="text-sm text-muted-foreground">Expenses this month</p>
 
-          <p className="mt-3 text-3xl font-semibold tracking-tight text-danger">
+          <p className="mt-3 break-words text-3xl font-semibold tracking-tight text-danger">
             {formatMoney(summary.monthlyExpenses)}
           </p>
         </article>
@@ -220,7 +220,7 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-6">
+        <div className="min-w-0 overflow-hidden rounded-2xl border border-border bg-surface p-6">
           <IncomeExpensesChart months={months} currency={user.currency} />
         </div>
       </section>
@@ -236,7 +236,7 @@ export default function DashboardPage() {
           </p>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-6">
+        <div className="min-w-0 overflow-hidden rounded-2xl border border-border bg-surface p-6">
           <ExpensesByCategoryChart
             categories={categories}
             currency={user.currency}
@@ -245,8 +245,8 @@ export default function DashboardPage() {
       </section>
 
       <section className="mt-10">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
+        <div className="mb-4 flex items-end justify-between gap-4">
+          <div className="min-w-0">
             <h2 className="text-xl font-semibold tracking-tight">
               Recent transactions
             </h2>
@@ -258,7 +258,7 @@ export default function DashboardPage() {
 
           <Link
             href="/transactions"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="shrink-0 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             View all
           </Link>
@@ -278,20 +278,20 @@ export default function DashboardPage() {
               {summary.recentTransactions.map((transaction) => (
                 <div
                   key={transaction.id}
-                  className="flex items-center justify-between px-6 py-5"
+                  className="flex items-center justify-between gap-4 px-6 py-5"
                 >
-                  <div>
-                    <p className="font-medium">
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">
                       {transaction.description || transaction.category.name}
                     </p>
 
-                    <p className="mt-1 text-sm text-muted-foreground">
+                    <p className="mt-1 truncate text-sm text-muted-foreground">
                       {transaction.category.name}
                     </p>
                   </div>
 
                   <p
-                    className={`font-semibold ${
+                    className={`shrink-0 text-right font-semibold ${
                       transaction.type === "INCOME"
                         ? "text-success"
                         : "text-danger"

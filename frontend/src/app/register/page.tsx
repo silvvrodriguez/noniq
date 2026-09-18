@@ -50,7 +50,12 @@ export default function RegisterPage() {
     <main className="min-h-screen">
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col px-6 py-8">
         <header>
-          <span className="text-xl font-semibold tracking-tight">NONIQ</span>
+          <Link
+            href="/"
+            className="text-xl font-semibold tracking-tight transition-opacity duration-150 hover:opacity-60"
+          >
+            NONIQ
+          </Link>
         </header>
 
         <section className="flex flex-1 items-center justify-center">
@@ -157,7 +162,7 @@ export default function RegisterPage() {
 
               <button
                 type="submit"
-                className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground"
+                className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
               >
                 Create account
               </button>
@@ -165,7 +170,10 @@ export default function RegisterPage() {
 
             <p className="mt-6 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link href="/login" className="font-medium text-foreground">
+              <Link
+                href="/login"
+                className="font-medium text-foreground transition-opacity duration-150 hover:opacity-60"
+              >
                 Sign in
               </Link>
             </p>
