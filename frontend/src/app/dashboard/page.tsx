@@ -129,6 +129,7 @@ export default function DashboardPage() {
   const [months, setMonths] =
     useState<MonthlyData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showSlowLoadingMessage, setShowSlowLoadingMessage] = useState(false);
   const [error, setError] =
     useState<string | null>(null);
 
@@ -169,6 +170,18 @@ export default function DashboardPage() {
     void loadInitialDashboard();
   }, [router]);
 
+  useEffect(() => {
+    if (!loading) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setShowSlowLoadingMessage(true);
+    }, 4000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [loading]);
+
   async function retryDashboard() {
     const token = localStorage.getItem("noniq_token");
 
@@ -178,6 +191,7 @@ export default function DashboardPage() {
     }
 
     setLoading(true);
+    setShowSlowLoadingMessage(false);
     setError(null);
 
     try {
@@ -220,11 +234,68 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-screen items-center justify-center px-6">
-        <p className="text-sm text-muted-foreground">
-          Loading Noniq...
-        </p>
-      </main>
+      <AppShell>
+        <AppHeader />
+
+        <section className="mt-16" aria-busy="true" aria-live="polite">
+          <div className="h-4 w-20 animate-pulse rounded-full bg-border" />
+          <div className="mt-4 h-10 w-56 max-w-full animate-pulse rounded-xl bg-border" />
+          <div className="mt-4 h-5 w-72 max-w-full animate-pulse rounded-lg bg-border" />
+
+          {showSlowLoadingMessage && (
+            <div className="mt-6 rounded-xl border border-border bg-surface px-4 py-3">
+              <p className="text-sm font-medium">Waking up your workspace...</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Noniq&apos;s free hosting may need a few extra seconds after a
+                period of inactivity.
+              </p>
+            </div>
+          )}
+        </section>
+
+        <section className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, index) => (
+            <article
+              key={index}
+              className="min-w-0 rounded-2xl border border-border bg-surface p-6"
+            >
+              <div className="h-4 w-24 animate-pulse rounded-full bg-border" />
+              <div className="mt-4 h-9 w-36 max-w-full animate-pulse rounded-xl bg-border" />
+            </article>
+          ))}
+        </section>
+
+        <section className="mt-10">
+          <div className="h-6 w-48 animate-pulse rounded-lg bg-border" />
+          <div className="mt-2 h-4 w-72 max-w-full animate-pulse rounded-full bg-border" />
+          <div className="mt-4 h-72 animate-pulse rounded-2xl border border-border bg-surface" />
+        </section>
+
+        <section className="mt-10">
+          <div className="h-6 w-44 animate-pulse rounded-lg bg-border" />
+          <div className="mt-2 h-4 w-56 max-w-full animate-pulse rounded-full bg-border" />
+          <div className="mt-4 h-72 animate-pulse rounded-2xl border border-border bg-surface" />
+        </section>
+
+        <section className="mt-10 pb-8">
+          <div className="h-6 w-48 animate-pulse rounded-lg bg-border" />
+          <div className="mt-2 h-4 w-56 max-w-full animate-pulse rounded-full bg-border" />
+          <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-surface">
+            {Array.from({ length: 3 }).map((_, index) => (
+              <div
+                key={index}
+                className="flex items-center justify-between gap-4 border-b border-border px-6 py-5 last:border-b-0"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="h-4 w-40 max-w-full animate-pulse rounded-full bg-border" />
+                  <div className="mt-3 h-3 w-24 animate-pulse rounded-full bg-border" />
+                </div>
+                <div className="h-5 w-24 animate-pulse rounded-full bg-border" />
+              </div>
+            ))}
+          </div>
+        </section>
+      </AppShell>
     );
   }
 
