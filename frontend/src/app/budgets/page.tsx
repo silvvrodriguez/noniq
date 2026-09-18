@@ -135,7 +135,7 @@ export default function BudgetsPage() {
         setBudgets(budgetList);
         setCategoryId(expenseCategories[0]?.id ?? "");
       } catch {
-        setError("Unable to connect to the server.");
+        setError("Unable to connect to Noniq. Check your connection and try again.");
       } finally {
         setLoading(false);
       }
@@ -146,6 +146,10 @@ export default function BudgetsPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (submitting) {
+      return;
+    }
 
     const token = localStorage.getItem("noniq_token");
 
@@ -176,7 +180,13 @@ export default function BudgetsPage() {
         }),
       });
 
-      const data = await response.json();
+      let data: { message?: string } = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        // The server may return a response without a JSON body.
+      }
 
       if (response.status === 401) {
         localStorage.removeItem("noniq_token");
@@ -199,13 +209,17 @@ export default function BudgetsPage() {
       setAmount("");
       setMonth("");
     } catch {
-      setError("Unable to connect to the server.");
+      setError("Unable to connect to Noniq. Check your connection and try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
   function startEditing(budget: Budget) {
+    if (savingBudgetId || deletingBudgetId || confirmingDeleteId) {
+      return;
+    }
+
     setEditingBudgetId(budget.id);
     setEditingAmount(String(budget.amount));
     setConfirmingDeleteId(null);
@@ -219,6 +233,10 @@ export default function BudgetsPage() {
   }
 
   async function handleSaveBudget(budgetId: string) {
+    if (savingBudgetId || deletingBudgetId) {
+      return;
+    }
+
     const token = localStorage.getItem("noniq_token");
 
     if (!token) {
@@ -248,7 +266,13 @@ export default function BudgetsPage() {
         }),
       });
 
-      const data = await response.json();
+      let data: { message?: string } = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        // The server may return a response without a JSON body.
+      }
 
       if (response.status === 401) {
         localStorage.removeItem("noniq_token");
@@ -271,13 +295,17 @@ export default function BudgetsPage() {
       setEditingBudgetId(null);
       setEditingAmount("");
     } catch {
-      setError("Unable to connect to the server.");
+      setError("Unable to connect to Noniq. Check your connection and try again.");
     } finally {
       setSavingBudgetId(null);
     }
   }
 
   function startDeleting(budgetId: string) {
+    if (savingBudgetId || deletingBudgetId || confirmingDeleteId) {
+      return;
+    }
+
     setConfirmingDeleteId(budgetId);
     setEditingBudgetId(null);
     setEditingAmount("");
@@ -290,6 +318,10 @@ export default function BudgetsPage() {
   }
 
   async function handleDeleteBudget(budgetId: string) {
+    if (deletingBudgetId || savingBudgetId) {
+      return;
+    }
+
     const token = localStorage.getItem("noniq_token");
 
     if (!token) {
@@ -308,7 +340,13 @@ export default function BudgetsPage() {
         },
       });
 
-      const data = await response.json();
+      let data: { message?: string } = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        // The server may return a response without a JSON body.
+      }
 
       if (response.status === 401) {
         localStorage.removeItem("noniq_token");
@@ -330,7 +368,7 @@ export default function BudgetsPage() {
       setBudgets(refreshedBudgets);
       setConfirmingDeleteId(null);
     } catch {
-      setError("Unable to connect to the server.");
+      setError("Unable to connect to Noniq. Check your connection and try again.");
     } finally {
       setDeletingBudgetId(null);
     }
@@ -392,7 +430,8 @@ export default function BudgetsPage() {
                 value={amount}
                 onChange={(event) => setAmount(event.target.value)}
                 required
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
+                disabled={submitting}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
@@ -410,7 +449,8 @@ export default function BudgetsPage() {
                 value={month}
                 onChange={(event) => setMonth(event.target.value)}
                 required
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
+                disabled={submitting}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
@@ -427,8 +467,8 @@ export default function BudgetsPage() {
                 value={categoryId}
                 onChange={(event) => setCategoryId(event.target.value)}
                 required
-                disabled={categories.length === 0}
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none disabled:opacity-50"
+                disabled={submitting || categories.length === 0}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {categories.length === 0 ? (
                   <option value="">No expense categories available</option>
@@ -451,7 +491,7 @@ export default function BudgetsPage() {
             <button
               type="submit"
               disabled={submitting || categories.length === 0}
-              className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground transition-all duration-150 hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
             >
               {submitting ? "Creating..." : "Create budget"}
             </button>
@@ -485,7 +525,7 @@ export default function BudgetsPage() {
                     <div>
                       <p className="font-semibold">{budget.category.name}</p>
 
-                      <p className="mt-1 text-sm text-muted-foreground">
+                      <p className="mt-2 text-sm text-muted-foreground">
                         {formatMonth(budget.month)}
                       </p>
                     </div>
@@ -500,7 +540,12 @@ export default function BudgetsPage() {
                           <button
                             type="button"
                             onClick={() => startEditing(budget)}
-                            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                            disabled={
+                              savingBudgetId !== null ||
+                              deletingBudgetId !== null ||
+                              confirmingDeleteId !== null
+                            }
+                            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Edit
                           </button>
@@ -508,7 +553,12 @@ export default function BudgetsPage() {
                           <button
                             type="button"
                             onClick={() => startDeleting(budget.id)}
-                            className="text-sm font-medium text-danger"
+                            disabled={
+                              savingBudgetId !== null ||
+                              deletingBudgetId !== null ||
+                              confirmingDeleteId !== null
+                            }
+                            className="text-sm font-medium text-danger transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Delete
                           </button>
@@ -542,10 +592,11 @@ export default function BudgetsPage() {
                         onChange={(event) =>
                           setEditingAmount(event.target.value)
                         }
-                        className="mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 outline-none"
+                        disabled={isSaving}
+                        className="mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
                       />
 
-                      <div className="mt-4 flex gap-3">
+                      <div className="mt-4 flex flex-wrap gap-3">
                         <button
                           type="button"
                           onClick={() => handleSaveBudget(budget.id)}
@@ -559,7 +610,7 @@ export default function BudgetsPage() {
                           type="button"
                           onClick={cancelEditing}
                           disabled={isSaving}
-                          className="rounded-xl border border-border px-5 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-xl border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Cancel
                         </button>
@@ -575,12 +626,12 @@ export default function BudgetsPage() {
                         Your transactions will not be deleted.
                       </p>
 
-                      <div className="mt-4 flex gap-3">
+                      <div className="mt-4 flex flex-wrap gap-3">
                         <button
                           type="button"
                           onClick={() => handleDeleteBudget(budget.id)}
                           disabled={isDeleting}
-                          className="rounded-xl bg-danger px-5 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-xl bg-danger px-5 py-2.5 text-sm font-medium text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
                         >
                           {isDeleting ? "Deleting..." : "Delete budget"}
                         </button>
@@ -596,7 +647,7 @@ export default function BudgetsPage() {
                       </div>
                     </div>
                   ) : (
-                    <div className="mt-5 grid grid-cols-3 gap-4">
+                    <div className="mt-5 grid gap-4 sm:grid-cols-3">
                       <div>
                         <p className="text-xs text-muted-foreground">Budget</p>
 

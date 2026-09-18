@@ -100,7 +100,7 @@ export default function SavingsGoalsPage() {
 
         setGoals(goalList);
       } catch {
-        setError("Unable to connect to the server.");
+        setError("Unable to connect to Noniq. Check your connection and try again.");
       } finally {
         setLoading(false);
       }
@@ -111,6 +111,10 @@ export default function SavingsGoalsPage() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (submitting) {
+      return;
+    }
 
     const token = localStorage.getItem("noniq_token");
 
@@ -161,7 +165,13 @@ export default function SavingsGoalsPage() {
         body: JSON.stringify(body),
       });
 
-      const data = await response.json();
+      let data: { message?: string } = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        // The server may return a response without a JSON body.
+      }
 
       if (response.status === 401) {
         localStorage.removeItem("noniq_token");
@@ -187,13 +197,17 @@ export default function SavingsGoalsPage() {
       setCurrentAmount("");
       setTargetDate("");
     } catch {
-      setError("Unable to connect to the server.");
+      setError("Unable to connect to Noniq. Check your connection and try again.");
     } finally {
       setSubmitting(false);
     }
   }
 
   function startEditing(goal: SavingsGoal) {
+    if (savingGoalId || deletingGoalId || confirmingDeleteId) {
+      return;
+    }
+
     setEditingGoalId(goal.id);
     setEditingName(goal.name);
     setEditingTargetAmount(String(goal.targetAmount));
@@ -216,6 +230,10 @@ export default function SavingsGoalsPage() {
   }
 
   async function handleSaveGoal(goalId: string) {
+    if (savingGoalId || deletingGoalId) {
+      return;
+    }
+
     const token = localStorage.getItem("noniq_token");
 
     if (!token) {
@@ -259,7 +277,13 @@ export default function SavingsGoalsPage() {
         }),
       });
 
-      const data = await response.json();
+      let data: { message?: string } = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        // The server may return a response without a JSON body.
+      }
 
       if (response.status === 401) {
         localStorage.removeItem("noniq_token");
@@ -286,13 +310,17 @@ export default function SavingsGoalsPage() {
       setEditingCurrentAmount("");
       setEditingTargetDate("");
     } catch {
-      setError("Unable to connect to the server.");
+      setError("Unable to connect to Noniq. Check your connection and try again.");
     } finally {
       setSavingGoalId(null);
     }
   }
 
   function startDeleting(goalId: string) {
+    if (savingGoalId || deletingGoalId || confirmingDeleteId) {
+      return;
+    }
+
     setConfirmingDeleteId(goalId);
 
     setEditingGoalId(null);
@@ -310,6 +338,10 @@ export default function SavingsGoalsPage() {
   }
 
   async function handleDeleteGoal(goalId: string) {
+    if (deletingGoalId || savingGoalId) {
+      return;
+    }
+
     const token = localStorage.getItem("noniq_token");
 
     if (!token) {
@@ -328,7 +360,13 @@ export default function SavingsGoalsPage() {
         },
       });
 
-      const data = await response.json();
+      let data: { message?: string } = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        // The server may return a response without a JSON body.
+      }
 
       if (response.status === 401) {
         localStorage.removeItem("noniq_token");
@@ -350,7 +388,7 @@ export default function SavingsGoalsPage() {
       setGoals(refreshedGoals);
       setConfirmingDeleteId(null);
     } catch {
-      setError("Unable to connect to the server.");
+      setError("Unable to connect to Noniq. Check your connection and try again.");
     } finally {
       setDeletingGoalId(null);
     }
@@ -414,7 +452,8 @@ export default function SavingsGoalsPage() {
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 required
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
+                disabled={submitting}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
@@ -435,7 +474,8 @@ export default function SavingsGoalsPage() {
                 value={targetAmount}
                 onChange={(event) => setTargetAmount(event.target.value)}
                 required
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
+                disabled={submitting}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
               />
             </div>
 
@@ -455,7 +495,8 @@ export default function SavingsGoalsPage() {
                 placeholder="0"
                 value={currentAmount}
                 onChange={(event) => setCurrentAmount(event.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
+                disabled={submitting}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
               />
 
               <p className="mt-2 text-xs text-muted-foreground">
@@ -476,7 +517,8 @@ export default function SavingsGoalsPage() {
                 type="date"
                 value={targetDate}
                 onChange={(event) => setTargetDate(event.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
+                disabled={submitting}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
               />
 
               <p className="mt-2 text-xs text-muted-foreground">Optional.</p>
@@ -491,7 +533,7 @@ export default function SavingsGoalsPage() {
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground transition-all duration-150 hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
             >
               {submitting ? "Creating..." : "Create goal"}
             </button>
@@ -545,7 +587,12 @@ export default function SavingsGoalsPage() {
                           <button
                             type="button"
                             onClick={() => startEditing(goal)}
-                            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                            disabled={
+                              savingGoalId !== null ||
+                              deletingGoalId !== null ||
+                              confirmingDeleteId !== null
+                            }
+                            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Edit
                           </button>
@@ -553,7 +600,12 @@ export default function SavingsGoalsPage() {
                           <button
                             type="button"
                             onClick={() => startDeleting(goal.id)}
-                            className="text-sm font-medium text-danger"
+                            disabled={
+                              savingGoalId !== null ||
+                              deletingGoalId !== null ||
+                              confirmingDeleteId !== null
+                            }
+                            className="text-sm font-medium text-danger transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50"
                           >
                             Delete
                           </button>
@@ -590,7 +642,8 @@ export default function SavingsGoalsPage() {
                             onChange={(event) =>
                               setEditingName(event.target.value)
                             }
-                            className="mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 outline-none"
+                            disabled={isSaving}
+                            className="mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
                           />
                         </div>
 
@@ -609,7 +662,8 @@ export default function SavingsGoalsPage() {
                             onChange={(event) =>
                               setEditingTargetDate(event.target.value)
                             }
-                            className="mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 outline-none"
+                            disabled={isSaving}
+                            className="mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
                           />
                         </div>
 
@@ -630,7 +684,8 @@ export default function SavingsGoalsPage() {
                             onChange={(event) =>
                               setEditingTargetAmount(event.target.value)
                             }
-                            className="mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 outline-none"
+                            disabled={isSaving}
+                            className="mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
                           />
                         </div>
 
@@ -651,17 +706,18 @@ export default function SavingsGoalsPage() {
                             onChange={(event) =>
                               setEditingCurrentAmount(event.target.value)
                             }
-                            className="mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 outline-none"
+                            disabled={isSaving}
+                            className="mt-2 w-full rounded-xl border border-border bg-surface px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
                           />
                         </div>
                       </div>
 
-                      <div className="mt-4 flex gap-3">
+                      <div className="mt-4 flex flex-wrap gap-3">
                         <button
                           type="button"
                           onClick={() => handleSaveGoal(goal.id)}
                           disabled={isSaving}
-                          className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all duration-150 hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
                         >
                           {isSaving ? "Saving..." : "Save"}
                         </button>
@@ -670,7 +726,7 @@ export default function SavingsGoalsPage() {
                           type="button"
                           onClick={cancelEditing}
                           disabled={isSaving}
-                          className="rounded-xl border border-border px-5 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-xl border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Cancel
                         </button>
@@ -680,17 +736,17 @@ export default function SavingsGoalsPage() {
                     <div className="mt-5 rounded-xl border border-border bg-background p-4">
                       <p className="font-medium">Delete this savings goal?</p>
 
-                      <p className="mt-1 text-sm text-muted-foreground">
+                      <p className="mt-2 text-sm text-muted-foreground">
                         This will permanently remove the goal &quot;
                         {goal.name}&quot;.
                       </p>
 
-                      <div className="mt-4 flex gap-3">
+                      <div className="mt-4 flex flex-wrap gap-3">
                         <button
                           type="button"
                           onClick={() => handleDeleteGoal(goal.id)}
                           disabled={isDeleting}
-                          className="rounded-xl bg-danger px-5 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-xl bg-danger px-5 py-2.5 text-sm font-medium text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
                         >
                           {isDeleting ? "Deleting..." : "Delete goal"}
                         </button>
@@ -699,14 +755,14 @@ export default function SavingsGoalsPage() {
                           type="button"
                           onClick={cancelDeleting}
                           disabled={isDeleting}
-                          className="rounded-xl border border-border px-5 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+                          className="rounded-xl border border-border px-5 py-2.5 text-sm font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           Cancel
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <div className="mt-5 grid grid-cols-3 gap-4">
+                    <div className="mt-5 grid gap-4 sm:grid-cols-3">
                       <div>
                         <p className="text-xs text-muted-foreground">
                           Target

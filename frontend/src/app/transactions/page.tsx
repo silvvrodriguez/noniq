@@ -54,6 +54,17 @@ export default function TransactionsPage() {
   const [exporting, setExporting] = useState(false);
   const [error, setError] = useState("");
 
+  // Edit / delete transaction
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editType, setEditType] = useState<TransactionType>("EXPENSE");
+  const [editAmount, setEditAmount] = useState("");
+  const [editCategoryId, setEditCategoryId] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+
   const filteredCategories = categories.filter(
     (category) => category.type === type,
   );
@@ -61,6 +72,10 @@ export default function TransactionsPage() {
   const filterCategories = filterType
     ? categories.filter((category) => category.type === filterType)
     : categories;
+
+  const hasActiveFilters = Boolean(
+    filterType || filterCategoryId || filterFrom || filterTo,
+  );
 
   const fetchTransactions = useCallback(
     async (
@@ -108,11 +123,18 @@ export default function TransactionsPage() {
         return null;
       }
 
-      const data = await response.json();
+      let data: { message?: string; transactions?: Transaction[] } | Transaction[] = [];
+
+      try {
+        data = await response.json();
+      } catch {
+        // The server may return a response without a JSON body.
+      }
 
       if (!response.ok) {
         throw new Error(
-          data.message || "Unable to load your transactions.",
+          (!Array.isArray(data) && data.message) ||
+            "Unable to load your transactions.",
         );
       }
 
@@ -194,6 +216,10 @@ export default function TransactionsPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (submitting) {
+      return;
+    }
+
     const token = localStorage.getItem("noniq_token");
 
     if (!token) {
@@ -225,7 +251,13 @@ export default function TransactionsPage() {
         }),
       });
 
-      const data = await response.json();
+      let data: { message?: string } = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        // The server may return a response without a JSON body.
+      }
 
       if (response.status === 401) {
         localStorage.removeItem("noniq_token");
@@ -265,7 +297,190 @@ export default function TransactionsPage() {
     }
   }
 
+  function startEditing(transaction: Transaction) {
+    if (savingEdit || deletingId || pendingDeleteId) {
+      return;
+    }
+
+    setError("");
+    setEditingId(transaction.id);
+    setEditType(transaction.type);
+    setEditAmount(transaction.amount);
+    setEditCategoryId(transaction.category.id);
+    setEditDescription(transaction.description ?? "");
+    setEditDate(transaction.date.slice(0, 10));
+  }
+
+  function cancelEditing() {
+    if (savingEdit) {
+      return;
+    }
+
+    setEditingId(null);
+    setEditAmount("");
+    setEditDescription("");
+    setEditDate("");
+    setEditCategoryId("");
+  }
+
+  function handleEditTypeChange(newType: TransactionType) {
+    setEditType(newType);
+
+    const firstCategory = categories.find(
+      (category) => category.type === newType,
+    );
+
+    setEditCategoryId(firstCategory?.id ?? "");
+  }
+
+  async function handleSaveEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!editingId || savingEdit) {
+      return;
+    }
+
+    const token = localStorage.getItem("noniq_token");
+
+    if (!token) {
+      router.replace("/login");
+      return;
+    }
+
+    if (!editCategoryId) {
+      setError(`Create an ${editType.toLowerCase()} category first.`);
+      return;
+    }
+
+    setError("");
+    setSavingEdit(true);
+
+    try {
+      const response = await fetch(`${API_URL}/transactions/${editingId}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          amount: Number(editAmount),
+          description: editDescription.trim() || null,
+          type: editType,
+          date: new Date(`${editDate}T12:00:00.000Z`).toISOString(),
+          categoryId: editCategoryId,
+        }),
+      });
+
+      let data: { message?: string } = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        // The server may return a response without a JSON body.
+      }
+
+      if (response.status === 401) {
+        localStorage.removeItem("noniq_token");
+        router.replace("/login");
+        return;
+      }
+
+      if (!response.ok) {
+        setError(data.message || "Unable to update transaction.");
+        return;
+      }
+
+      const refreshedTransactions = await fetchTransactions(token, {
+        type: filterType,
+        categoryId: filterCategoryId,
+        from: filterFrom,
+        to: filterTo,
+      });
+
+      if (refreshedTransactions === null) {
+        return;
+      }
+
+      setTransactions(refreshedTransactions);
+      setEditingId(null);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to update transaction.",
+      );
+    } finally {
+      setSavingEdit(false);
+    }
+  }
+
+  async function handleDelete(transaction: Transaction) {
+    if (deletingId) {
+      return;
+    }
+
+    const token = localStorage.getItem("noniq_token");
+
+    if (!token) {
+      router.replace("/login");
+      return;
+    }
+
+    setError("");
+    setDeletingId(transaction.id);
+
+    try {
+      const response = await fetch(`${API_URL}/transactions/${transaction.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      let data: { message?: string } = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        // The server may return a response without a JSON body.
+      }
+
+      if (response.status === 401) {
+        localStorage.removeItem("noniq_token");
+        router.replace("/login");
+        return;
+      }
+
+      if (!response.ok) {
+        setError(data.message || "Unable to delete transaction.");
+        return;
+      }
+
+      setTransactions((currentTransactions) =>
+        currentTransactions.filter((item) => item.id !== transaction.id),
+      );
+
+      if (editingId === transaction.id) {
+        setEditingId(null);
+      }
+
+      setPendingDeleteId(null);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "Unable to delete transaction.",
+      );
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   async function handleApplyFilters() {
+    if (filtering) {
+      return;
+    }
+
     const token = localStorage.getItem("noniq_token");
 
     if (!token) {
@@ -306,6 +521,10 @@ export default function TransactionsPage() {
   }
 
   async function handleClearFilters() {
+    if (filtering) {
+      return;
+    }
+
     const token = localStorage.getItem("noniq_token");
 
     if (!token) {
@@ -340,6 +559,10 @@ export default function TransactionsPage() {
   }
 
   async function handleExportCsv() {
+    if (exporting) {
+      return;
+    }
+
     const token = localStorage.getItem("noniq_token");
 
     if (!token) {
@@ -443,6 +666,15 @@ export default function TransactionsPage() {
         </div>
       </section>
 
+      {error && (
+        <div
+          className="mt-6 rounded-xl border border-danger/20 bg-surface px-4 py-3 text-sm text-danger"
+          role="alert"
+        >
+          {error}
+        </div>
+      )}
+
       <section className="mt-10 grid gap-8 lg:grid-cols-[380px_1fr]">
         <div className="rounded-2xl border border-border bg-surface p-6">
           <h2 className="text-lg font-semibold">New transaction</h2>
@@ -459,6 +691,7 @@ export default function TransactionsPage() {
               <select
                 id="type"
                 value={type}
+                disabled={submitting}
                 onChange={(event) => {
                   const newType = event.target.value as TransactionType;
 
@@ -470,7 +703,7 @@ export default function TransactionsPage() {
 
                   setCategoryId(firstCategory?.id ?? "");
                 }}
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="EXPENSE">Expense</option>
                 <option value="INCOME">Income</option>
@@ -494,7 +727,8 @@ export default function TransactionsPage() {
                 value={amount}
                 onChange={(event) => setAmount(event.target.value)}
                 required
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
+                disabled={submitting}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
 
@@ -511,8 +745,8 @@ export default function TransactionsPage() {
                 value={categoryId}
                 onChange={(event) => setCategoryId(event.target.value)}
                 required
-                disabled={filteredCategories.length === 0}
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none disabled:opacity-50"
+                disabled={submitting || filteredCategories.length === 0}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {filteredCategories.length === 0 ? (
                   <option value="">No categories available</option>
@@ -541,7 +775,8 @@ export default function TransactionsPage() {
                 placeholder="e.g. Groceries"
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
+                disabled={submitting}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
 
@@ -559,14 +794,15 @@ export default function TransactionsPage() {
                 value={date}
                 onChange={(event) => setDate(event.target.value)}
                 required
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none"
+                disabled={submitting}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
 
             <button
               type="submit"
               disabled={submitting}
-              className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground transition-all duration-150 hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 disabled:active:scale-100"
             >
               {submitting ? "Adding..." : "Add transaction"}
             </button>
@@ -683,11 +919,6 @@ export default function TransactionsPage() {
               </div>
             </div>
 
-            {error && (
-              <p className="mt-4 text-sm text-danger" role="alert">
-                {error}
-              </p>
-            )}
 
             <button
               type="button"
@@ -702,46 +933,269 @@ export default function TransactionsPage() {
           <div className="mt-4 overflow-hidden rounded-2xl border border-border bg-surface">
             {transactions.length === 0 ? (
               <div className="px-6 py-12 text-center">
-                <p className="font-medium">No transactions found</p>
+                <p className="font-medium">
+                  {hasActiveFilters
+                    ? "No transactions match your filters"
+                    : "No transactions yet"}
+                </p>
 
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Try changing your filters or add a new transaction.
+                  {hasActiveFilters
+                    ? "Try changing or clearing your filters."
+                    : "Add your first transaction to start tracking your activity."}
                 </p>
               </div>
             ) : (
               <div className="divide-y divide-border">
-                {transactions.map((transaction) => (
-                  <div
-                    key={transaction.id}
-                    className="flex items-center justify-between gap-6 px-6 py-5"
-                  >
-                    <div>
-                      <p className="font-medium">
-                        {transaction.description ||
-                          transaction.category.name}
-                      </p>
+                {transactions.map((transaction) => {
+                  const isEditing = editingId === transaction.id;
+                  const editCategories = categories.filter(
+                    (category) => category.type === editType,
+                  );
 
-                      <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
-                        <span>{transaction.category.name}</span>
+                  if (isEditing) {
+                    return (
+                      <form
+                        key={transaction.id}
+                        onSubmit={handleSaveEdit}
+                        className="px-6 py-6"
+                      >
+                        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                          <div>
+                            <label
+                              htmlFor={`edit-type-${transaction.id}`}
+                              className="mb-2 block text-xs font-medium text-muted-foreground"
+                            >
+                              Type
+                            </label>
+                            <select
+                              id={`edit-type-${transaction.id}`}
+                              value={editType}
+                              onChange={(event) =>
+                                handleEditTypeChange(
+                                  event.target.value as TransactionType,
+                                )
+                              }
+                              disabled={savingEdit}
+                              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              <option value="EXPENSE">Expense</option>
+                              <option value="INCOME">Income</option>
+                            </select>
+                          </div>
 
-                        <span aria-hidden="true">·</span>
+                          <div>
+                            <label
+                              htmlFor={`edit-amount-${transaction.id}`}
+                              className="mb-2 block text-xs font-medium text-muted-foreground"
+                            >
+                              Amount
+                            </label>
+                            <input
+                              id={`edit-amount-${transaction.id}`}
+                              type="number"
+                              min="1"
+                              step="1"
+                              value={editAmount}
+                              onChange={(event) =>
+                                setEditAmount(event.target.value)
+                              }
+                              disabled={savingEdit}
+                              required
+                              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                            />
+                          </div>
 
-                        <span>{formatDate(transaction.date)}</span>
+                          <div>
+                            <label
+                              htmlFor={`edit-category-${transaction.id}`}
+                              className="mb-2 block text-xs font-medium text-muted-foreground"
+                            >
+                              Category
+                            </label>
+                            <select
+                              id={`edit-category-${transaction.id}`}
+                              value={editCategoryId}
+                              onChange={(event) =>
+                                setEditCategoryId(event.target.value)
+                              }
+                              disabled={savingEdit || editCategories.length === 0}
+                              required
+                              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              {editCategories.length === 0 ? (
+                                <option value="">No categories available</option>
+                              ) : (
+                                editCategories.map((category) => (
+                                  <option key={category.id} value={category.id}>
+                                    {category.name}
+                                  </option>
+                                ))
+                              )}
+                            </select>
+                          </div>
+
+                          <div>
+                            <label
+                              htmlFor={`edit-date-${transaction.id}`}
+                              className="mb-2 block text-xs font-medium text-muted-foreground"
+                            >
+                              Date
+                            </label>
+                            <input
+                              id={`edit-date-${transaction.id}`}
+                              type="date"
+                              value={editDate}
+                              onChange={(event) => setEditDate(event.target.value)}
+                              disabled={savingEdit}
+                              required
+                              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2 xl:col-span-1">
+                            <label
+                              htmlFor={`edit-description-${transaction.id}`}
+                              className="mb-2 block text-xs font-medium text-muted-foreground"
+                            >
+                              Description
+                            </label>
+                            <input
+                              id={`edit-description-${transaction.id}`}
+                              type="text"
+                              maxLength={200}
+                              value={editDescription}
+                              onChange={(event) =>
+                                setEditDescription(event.target.value)
+                              }
+                              disabled={savingEdit}
+                              className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="mt-5 flex flex-wrap gap-3">
+                          <button
+                            type="submit"
+                            disabled={savingEdit || editCategories.length === 0}
+                            className="rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            {savingEdit ? "Saving..." : "Save changes"}
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={cancelEditing}
+                            disabled={savingEdit}
+                            className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-background disabled:cursor-not-allowed disabled:opacity-50"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    );
+                  }
+
+                  return (
+                    <div key={transaction.id} className="px-6 py-5">
+                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">
+                            {transaction.description || transaction.category.name}
+                          </p>
+
+                          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                            <span>{transaction.category.name}</span>
+                            <span aria-hidden="true">·</span>
+                            <span>{formatDate(transaction.date)}</span>
+                          </div>
+                        </div>
+
+                        <div className="flex shrink-0 items-center justify-between gap-4 sm:justify-end">
+                          <p
+                            className={`font-semibold ${
+                              transaction.type === "INCOME"
+                                ? "text-success"
+                                : "text-danger"
+                            }`}
+                          >
+                            {transaction.type === "INCOME" ? "+" : "-"}
+                            {Number(transaction.amount).toLocaleString()}
+                          </p>
+
+                          <div className="flex items-center gap-3">
+                            <button
+                              type="button"
+                              onClick={() => startEditing(transaction)}
+                              disabled={
+                                deletingId !== null ||
+                                savingEdit ||
+                                pendingDeleteId !== null
+                              }
+                              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Edit
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setError("");
+                                setPendingDeleteId(transaction.id);
+                              }}
+                              disabled={
+                                deletingId !== null ||
+                                savingEdit ||
+                                pendingDeleteId !== null
+                              }
+                              className="text-sm font-medium text-danger transition-opacity hover:opacity-70 disabled:cursor-not-allowed disabled:opacity-50"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
 
-                    <p
-                      className={`shrink-0 font-semibold ${
-                        transaction.type === "INCOME"
-                          ? "text-success"
-                          : "text-danger"
-                      }`}
-                    >
-                      {transaction.type === "INCOME" ? "+" : "-"}
-                      {Number(transaction.amount).toLocaleString()}
-                    </p>
-                  </div>
-                ))}
+                      {pendingDeleteId === transaction.id && (
+                        <div className="mt-5 rounded-xl border border-border bg-background p-4">
+                          <p className="font-medium">
+                            Delete this transaction?
+                          </p>
+
+                          <p className="mt-2 text-sm text-muted-foreground">
+                            This will permanently remove{" "}
+                            &quot;
+                            {transaction.description ||
+                              transaction.category.name}
+                            &quot;.
+                          </p>
+
+                          <div className="mt-4 flex flex-wrap gap-3">
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(transaction)}
+                              disabled={deletingId === transaction.id}
+                              className="rounded-xl bg-danger px-4 py-2.5 text-sm font-medium text-white transition-all duration-150 hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
+                            >
+                              {deletingId === transaction.id
+                                ? "Deleting..."
+                                : "Delete transaction"}
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setPendingDeleteId(null)}
+                              disabled={deletingId === transaction.id}
+                              className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-60"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

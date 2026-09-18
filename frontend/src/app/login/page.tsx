@@ -11,11 +11,17 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
+    if (submitting) {
+      return;
+    }
+
     setError("");
+    setSubmitting(true);
 
     try {
       const response = await fetch(`${API_URL}/auth/login`, {
@@ -29,7 +35,16 @@ export default function LoginPage() {
         }),
       });
 
-      const data = await response.json();
+      let data: {
+        message?: string;
+        token?: string;
+      } = {};
+
+      try {
+        data = await response.json();
+      } catch {
+        // The server may return a response without a JSON body.
+      }
 
       if (!response.ok) {
         setError(data.message || "Unable to sign in.");
@@ -45,7 +60,11 @@ export default function LoginPage() {
 
       router.push("/dashboard");
     } catch {
-      setError("Unable to connect to the server.");
+      setError(
+        "Unable to connect to Noniq. Check your connection and try again.",
+      );
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -88,12 +107,15 @@ export default function LoginPage() {
 
                 <input
                   id="email"
+                  name="email"
                   type="email"
+                  autoComplete="email"
                   placeholder="you@example.com"
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
+                  disabled={submitting}
                   required
-                  className="w-full rounded-xl border border-border bg-surface px-4 py-3 outline-none"
+                  className="w-full rounded-xl border border-border bg-surface px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
 
@@ -107,12 +129,15 @@ export default function LoginPage() {
 
                 <input
                   id="password"
+                  name="password"
                   type="password"
+                  autoComplete="current-password"
                   placeholder="Enter your password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
+                  disabled={submitting}
                   required
-                  className="w-full rounded-xl border border-border bg-surface px-4 py-3 outline-none"
+                  className="w-full rounded-xl border border-border bg-surface px-4 py-3 outline-none transition-colors focus:border-foreground disabled:cursor-not-allowed disabled:opacity-60"
                 />
               </div>
 
@@ -124,9 +149,10 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground transition-all duration-150 hover:opacity-90 active:scale-[0.98]"
+                disabled={submitting}
+                className="w-full rounded-xl bg-primary px-4 py-3 font-medium text-primary-foreground transition-all duration-150 hover:opacity-90 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60 disabled:active:scale-100"
               >
-                Sign in
+                {submitting ? "Signing in..." : "Sign in"}
               </button>
             </form>
 
